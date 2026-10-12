@@ -14,7 +14,7 @@ info:
     - 005 PostDetail.viewer.followingAuthor: 005 필수 칸이라 남기되 항상 false.
     - 알림: FOLLOW를 빼고 FRIEND_REQUEST(받은 친구 요청, url /settings#friends)·FRIEND_ACCEPTED(내 요청 수락, url /@{수락한 사람})를 더한다.
       둘 다 한 건짜리(묶지 않음)이고 끌 수 있다. NEW_POST는 친구의 새 글. 거절·취소·끊기는 알리지 않는다.
-    - follow 테이블과 남은 행은 되돌리기 쉽게 그대로 둔다(탈퇴 정리만 계속 지운다).
+    - 기존 follow 행은 V6 마이그레이션에서 지운다(테이블은 팀 ERD에 맞춰 남긴다). 친구로 옮기지 않는다.
 servers:
   - url: http://localhost:8080
     description: 로컬 Docker Compose
