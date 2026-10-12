@@ -10,7 +10,7 @@
 | `specs/NNN-기능/checklists/requirements.md` | 스펙 품질 체크리스트 |
 | `.claude/skills/speckit-*` | Claude Code용 Spec Kit 명령 |
 
-> 구현 코드(백엔드·화면·배포)는 [AIGJ006/DOCS](https://github.com/AIGJ006/DOCS) 저장소에 있습니다. 이 저장소는 문서만 둡니다(2026-10-12에 나눔, 수정 기록은 그대로 옮겨 옴).
+> 구현 코드(백엔드·화면·배포)는 [AIGJ006/BaseLOG](https://github.com/AIGJ006/BaseLOG) 저장소에 있습니다. 이 저장소는 문서만 둡니다(2026-10-12에 나눔, 수정 기록은 그대로 옮겨 옴).
 
 ## 기능 스펙
 
