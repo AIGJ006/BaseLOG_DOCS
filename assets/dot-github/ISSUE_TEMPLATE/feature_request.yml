@@ -1,0 +1,33 @@
+name: 기능 제안
+description: 새 기능이나 바꾸고 싶은 점
+title: "[제안] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: 무엇을 하고 싶나요
+      placeholder: 예) 글을 친구에게만 보이게 하고 싶어요
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 왜 필요한가요
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 범위
+      description: 공통 스펙(001~016)을 바꾸는 일이면 팀과 먼저 정해요
+      options:
+        - 공통 스펙을 바꾸거나 더함 (팀 확인 필요)
+        - 개인 확장 (017 카테고리처럼)
+        - 화면만 다듬기
+        - 잘 모르겠어요
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: 관련 스펙
+      placeholder: 예) specs/004-visibility-permission

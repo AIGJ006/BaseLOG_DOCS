@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: BaseLOG 사이트
+    url: https://baselog.java21.net
+    about: 사이트를 직접 써 보세요
+  - name: 설계 문서 (BaseLOG_DOCS)
+    url: https://github.com/AIGJ006/BaseLOG_DOCS
+    about: 기능별 스펙과 "정해진 것" 표
