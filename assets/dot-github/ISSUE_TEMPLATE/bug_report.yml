@@ -1,0 +1,44 @@
+name: 버그 신고
+description: 사이트나 화면이 이상하게 동작해요
+title: "[버그] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무엇이 이상한가요
+      placeholder: 예) 글 등록을 누르면 "잠시 후 다시 시도해 주세요"가 계속 나와요
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 어떻게 하면 생기나요
+      placeholder: |
+        1. 로그인하고 글쓰기로 가요
+        2. 사진을 넣고 [글 등록]을 눌러요
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 원래는 어떻게 되어야 하나요
+  - type: dropdown
+    id: where
+    attributes:
+      label: 어디서 봤나요
+      options:
+        - 사이트 (baselog.java21.net)
+        - 내 컴퓨터 (localhost)
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 기기·브라우저·테마
+      placeholder: 예) 맥북 크롬, 다크 모드 / 아이폰 사파리
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: 캡처
+      description: 화면 캡처나 오류 메시지를 붙여 주세요. 비밀번호나 키는 가려 주세요.
