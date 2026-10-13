@@ -12,9 +12,9 @@
 
 ### Session 2026-10-13 (추천안대로 결정, 민서 위임)
 
-- Q: 바탕은? → A: "둥지 꾸미기". 포인트를 쌓아 상점에서 사고 장착한다. 그림은 로고의 둥지 B 스타일로 코드(SVG)로 그릴 수 있는 것만: 배경 6, 테두리 3, 장식 5.
+- Q: 바탕은? → A: "둥지 꾸미기". 포인트를 쌓아 상점에서 사고 장착한다. 처음엔 코드(SVG)로 그렸으나 2026-10-13 민서 님이 픽셀 그림(새 4단계·둥지 9·새 장식 12·소품 9)을 보내 그것으로 바꿨다. 처음 모습은 기본 숲·기본 둥지. 성장 상태 UI(Lv·행복도 막대)는 넣지 않는다(민서 "무시해도 돼").
 - Q: 출석 기준은? → A: 로그인 유지가 아니라 하루(Asia/Seoul) 한 번 **내 둥지(/@나)** 나 **[내 둥지 꾸미기]** 화면에 들어오면 출석. 처음이면 "출석했어요 +10" 알림.
-- Q: 새 크기는? → A: 1~5단계(아기 새·꼬마 새·어린 새·어른 새·큰 새). 연속 출석이 3의 배수가 되는 날 한 단계 자란다. 마지막 출석 다음 날부터 빠진 날이 3일을 넘으면 넘은 날 하루마다 한 단계씩 작아지고 1단계 밑으로는 안 내려간다. 작아진 크기는 읽을 때 셈한다.
+- Q: 새 크기는? → A: 1~4단계(아기 새·꼬마 새·어린 새·어른 새 — 그림 4장에 맞춤). 연속 출석이 3의 배수가 되는 날 한 단계 자란다. 마지막 출석 다음 날부터 빠진 날이 3일을 넘으면 넘은 날 하루마다 한 단계씩 작아지고 1단계 밑으로는 안 내려간다. 작아진 크기는 읽을 때 셈한다.
 - Q: 좋아요 포인트는? → A: 다른 사람이 누른 좋아요만, 같은 (글, 누른 사람)은 한 번만(취소 후 다시 눌러도 그대로), 하루 상한.
 - Q: 포인트 저장은? → A: 잔액 칸 없이 "언제·왜·몇 점" 기록 표의 합. (회원, source_key) 유일로 중복 지급을 막고, 사기는 음수 한 줄, 되돌리기는 반대 부호 한 줄(ADJUST).
 - Q: 어디에 보이나? → A: ① 둥지 화면 머리말 오른쪽(폰은 아래 줄)에 그 둥지 주인의 꾸민 둥지·새를 크게, 방문자도 봄 ② 계정 메뉴 [내 둥지 꾸미기] `/nest`(나만). 홈 화면(민서 "홈화면은 빼자")과 글 상세 작성자 카드(민서 "없어도 될 거 같은데")에는 넣지 않는다.
@@ -35,8 +35,12 @@
 | 상점 | 값 |
 |---|---|
 | 배경 | 기본 숲 0 · 풀밭 100 · 맑은 하늘 100 · 노을 150 · 벚꽃 200 · 밤하늘 250 |
-| 테두리 | 없음 0 · 나뭇가지 80 · 금빛 300 |
-| 장식(여러 개 장착) | 나뭇잎 50 · 깃털 60 · 꽃 70 · 알 80 · 별 120 |
+| 둥지(하나) | 기본 0 · 나뭇잎 100 · 꽃 120 · 눈 150 · 버섯 150 · 리본 180 · 새집 200 · 울타리 200 · 별 300 |
+| 새 장식 — 머리(하나) | 모자 120 · 꽃관 100 · 나비 리본 80 · 왕관 300 |
+| 새 장식 — 얼굴(하나) | 안경 100 · 선글라스 120 |
+| 새 장식 — 목(하나) | 목도리 90 · 방울 목걸이 70 |
+| 새 장식 — 자리 없음(여러 개) | 꽃핀 70 · 나비 60 · 하트 50 · 별 80 |
+| 소품(여러 개) | 나뭇가지 40 · 나뭇잎 30 · 꽃 50 · 버섯 60 · 돌 30 · 물웅덩이 80 · 햇살 70 · 구름 70 · 비 70 |
 
 값이 0인 물건은 사지 않아도 가진 것으로 본다.
 
@@ -53,7 +57,7 @@
 
 1. **Given** 잔액이 값보다 적으면, **Then** [사기]가 "N점 모자라요"로 막히고 API는 409 `NEST_POINTS_NOT_ENOUGH`.
 2. **When** 사면, **Then** 확인 창 뒤 잔액이 줄고 기록에 "물건 사기 · 노을 −150". 같은 물건을 다시 사면 409 `NEST_ITEM_ALREADY_OWNED`.
-3. **When** [장착]하면, **Then** 배경·테두리는 하나로 바뀌고 장식은 더해진다. 장착한 장식은 [내리기]. 사지 않은 물건은 400 `NEST_ITEM_NOT_OWNED`.
+3. **When** [장착]하면, **Then** 배경·둥지는 하나로 바뀌고 소품·새 장식은 더해진다(같은 자리 새 장식은 화면이 바꿔 단다, 서버는 두 개 오면 400 `NEST_SLOT_TAKEN`). 장착한 것은 [내리기]. 사지 않은 물건은 400 `NEST_ITEM_NOT_OWNED`.
 
 ### User Story 3 - 둥지와 새 보여 주기 (P2)
 
@@ -66,25 +70,25 @@
 
 ## Data Model (Flyway V9, 새 표만)
 
-- `nest` (회원당 1줄): `member_id` PK·FK, `bird_level` 1~5, `streak_days`, `best_streak_days`, `last_attended_on` date, `background`, `border`, `created_at`, `updated_at`.
+- `nest` (회원당 1줄): `member_id` PK·FK, `bird_level` 1~4, `streak_days`, `best_streak_days`, `last_attended_on` date, `background`, `nest_type`, `created_at`, `updated_at`.
 - `nest_point`: `id`, `member_id`, `reason`(ATTENDANCE·STREAK_BONUS·POST·COMMENT·LIKE_RECEIVED·PURCHASE·ADJUST), `amount`(≠0), `source_key`, `earned_on`, `created_at`. UNIQUE(`member_id`, `source_key`). source_key 예: `ATTEND:2026-10-13`, `STREAK:2026-10-13`, `POST:{postId}`, `COMMENT:{commentId}`, `LIKE:{postId}:{likerId}`, `BUY:{itemCode}`.
-- `nest_item`: PK(`member_id`, `item_code`), `equipped`(장식만), `bought_at`.
+- `nest_item`: PK(`member_id`, `item_code`), `equipped`(소품·새 장식만), `bought_at`.
 - 탈퇴 정리 order 25가 세 표에서 그 회원 줄을 지운다.
 
 ## API
 
 | 이름 | 요청 | 응답 |
 |---|---|---|
-| getMemberNest | `GET /api/members/{handle}/nest` (누구나) | `{level, levelName, streakDays, background, border, decorations[]}` · 없는 주인 404 |
+| getMemberNest | `GET /api/members/{handle}/nest` (누구나) | `{level, levelName, streakDays, background, nestType, decorations[]}` · 없는 주인 404 |
 | getMyNest | `GET /api/me/nest` | `{nest, balance, attendedToday, bestStreakDays, daysToGrow, today[{reason,count,cap,points}], items[{code,kind,name,price,owned,equipped}]}` |
 | attend | `POST /api/me/nest/attendance` | `{attended, pointsGained, grew, me}` · 같은 날 다시 부르면 `attended:false` |
 | listMyNestPoints | `GET /api/me/nest/points?before={id}` | `{items[{id,reason,label,amount,createdAt}], nextBefore}` 30개씩 새것부터 |
 | buyNestItem | `POST /api/me/nest/items/{code}` | MyNest · 400 `NEST_ITEM_UNKNOWN`, 409 `NEST_ITEM_ALREADY_OWNED`·`NEST_POINTS_NOT_ENOUGH` |
-| equipNest | `PUT /api/me/nest/equipped` `{background, border, decorations[]}` | MyNest · 400 `NEST_ITEM_NOT_OWNED` |
+| equipNest | `PUT /api/me/nest/equipped` `{background, nestType, decorations[]}` | MyNest · 400 `NEST_ITEM_NOT_OWNED`·`NEST_SLOT_TAKEN` |
 
 `/api/me/**`는 로그인 필요(401), 쓰기는 정지·탈퇴 유예 403(`ACCOUNT_WRITE`). 응답 `Cache-Control: private, no-store`(남의 둥지는 `no-cache`).
 
 ## 화면 규칙
 
-- 색은 `tokens.css`의 `--nest-*`·`--bird-*`·`--deco-*` 라이트·다크 쌍만. 화면 문구는 "블로그" 대신 "둥지".
+- 그림은 `frontend/src/features/nest/art/*.png`(물건 코드 이름). 둥지 그림은 뒤쪽 통째·앞쪽 아래만 두 번 놓아 새가 둥지 안에 앉아 보이게 한다. 배경색은 `tokens.css`의 `--nest-bg-*`·`--nest-ground` 라이트·다크 쌍만. 화면 문구는 "블로그" 대신 "둥지".
 - 폰(`pointer: coarse`, 768px 미만)에서는 둥지 그림이 머리말 아래 줄로 내려간다.
