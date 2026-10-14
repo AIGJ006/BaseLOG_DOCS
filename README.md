@@ -25,7 +25,7 @@
 | 007 | [comment](specs/007-comment/spec.md) 댓글·답글 | 21 | Tier B | tasks ✓ |
 | 008 | [tag](specs/008-tag/spec.md) 태그·태그별 글 목록 | 22 | Tier B | tasks ✓ |
 | 009 | [like-view](specs/009-like-view/spec.md) 좋아요·조회수 | 30, 31 | Tier B | tasks ✓ |
-| 010 | [follow-feed](specs/010-follow-feed/spec.md) 팔로우·피드 | 24 | Tier C | tasks ✓ |
+| 010 | [follow-feed](specs/010-follow-feed/spec.md) 팔로우·피드 (020 친구로 대체) | 24 | Tier C | tasks ✓ |
 | 011 | [notification](specs/011-notification/spec.md) 도메인 이벤트·인앱 알림 | 20, 25 | Tier C | tasks ✓ |
 | 012 | [trending-search](specs/012-trending-search/spec.md) 트렌딩·검색 | 32, 33 | Tier C | tasks ✓ |
 | 013 | [ai-tag-suggest](specs/013-ai-tag-suggest/spec.md) AI 태그 추천 | 34 | Tier C | tasks ✓ |
@@ -35,6 +35,8 @@
 | 017 | [category](specs/017-category/spec.md) 2단계 카테고리 (나민서 개인 확장) | 01 §2-4, 02 §7 | 개인 확장 | 구현 ✓ |
 | 018 | [attachment](specs/018-attachment/spec.md) 글 첨부파일 (나민서 개인 확장) | 민서 요청 2026-10-12 | 개인 확장 | 구현 ✓ |
 | 019 | [post-thumbnail](specs/019-post-thumbnail/spec.md) 글 썸네일 지정 (나민서 개인 확장) | 민서 요청 2026-10-12 | 개인 확장 | 구현 ✓ |
+| 020 | [follow-to-friends](specs/020-follow-to-friends/spec.md) 팔로우 → 친구(요청 → 수락), 친구 공개 글 (나민서 개인 확장, 010 대체) | 01 C-FRIEND-1 | 개인 확장 | 구현 ✓ |
+| 021 | [nest-decor](specs/021-nest-decor/spec.md) 둥지 꾸미기·새 키우기 (나민서 개인 확장) | 민서 요청 2026-10-13 | 개인 확장 | 구현 ✓ |
 
 ERD(03, 51)는 각 스펙의 Implementation Notes에서 참조하며, `/speckit-plan` 단계의 `data-model.md`로 옮겨 갑니다. 카테고리·주제 등은 공통이 아닌 개인 확장(01 §2-4)이라 공통 스펙에 없습니다.
 
