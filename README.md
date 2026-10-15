@@ -4,7 +4,7 @@
 
 | 경로 | 내용 |
 |---|---|
-| [`docs/`](docs/) | 원문 설계 문서 01~51 (수정하지 않은 원본) |
+| [`docs/`](docs/) | 원문 설계 문서 01~51 (수정하지 않은 원본). **기능별 아키텍처(모듈 지도)는 [52-feature-architecture.md](docs/52-feature-architecture.md)** (dev 코드 기준, 2026-10-15) |
 | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) | 프로젝트 원칙 8개 (docs 01·02 기반) |
 | [`specs/NNN-기능/spec.md`](specs/) | 기능별 스펙 (사용자 스토리, FR, 성공 기준, 가정, 구현 메모) |
 | `specs/NNN-기능/checklists/requirements.md` | 스펙 품질 체크리스트 |
