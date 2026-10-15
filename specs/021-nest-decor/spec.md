@@ -21,6 +21,11 @@
 - Q: 어디에 보이나? → A: 계정 메뉴 [내 둥지 꾸미기] `/nest`(나만). 홈 화면(민서 "홈화면은 빼자")과 글 상세 작성자 카드(민서 "없어도 될 거 같은데")에는 넣지 않는다. 둥지 화면 머리말 오른쪽 새 칸도 뺐다(2026-10-14 민서 "휑해서 없느니만 못하다" → "걍빼자"). 내 둥지에 들어올 때 출석 기록은 그대로.
 - Q: 배지(첫 글·7일 연속 등)? → A: 첫판에서 뺀다.
 
+### Session 2026-10-14 (단추 글자·포인트 기록, PR #126)
+
+- Q: 꾸미기 단추 글자는? → A: 새 장식은 [착용]·[착용 해제](착용 해제는 채운 초록), 배경·둥지는 [적용]·"적용 중"(누를 수 없음). 아직 없는 물건은 "🔒 N점으로 해금"(채운 초록)이고 누르면 사고 바로 씌운다. 화면 이름과 계정 메뉴 글자는 "새 키우기"(`/nest`).
+- Q: 포인트 기록은 몇 개 보이나? → A: 처음 5개, [더 보기]마다 10개씩 더. API는 그대로 30개씩 주고, 받은 것을 다 보이면 다음 쪽(`before`)을 부른다.
+
 ## 정한 숫자 (`blog.nest.*`)
 
 | 항목 | 값 |
@@ -54,9 +59,10 @@
 
 ### User Story 2 - 포인트로 꾸미기 (P1)
 
-1. **Given** 잔액이 값보다 적으면, **Then** [사기]가 "N점 모자라요"로 막히고 API는 409 `NEST_POINTS_NOT_ENOUGH`.
-2. **When** 사면, **Then** 확인 창 뒤 잔액이 줄고 기록에 "물건 사기 · 노을 −150". 같은 물건을 다시 사면 409 `NEST_ITEM_ALREADY_OWNED`.
-3. **When** [장착]하면, **Then** 배경·둥지는 하나로 바뀌고 새 장식은 더해진다(같은 자리 새 장식은 화면이 바꿔 단다, 서버는 두 개 오면 400 `NEST_SLOT_TAKEN`). 장착한 것은 [내리기]. 사지 않은 물건은 400 `NEST_ITEM_NOT_OWNED`.
+1. **Given** 잔액이 값보다 적으면, **Then** 단추가 "🔒 N점 모자라요"로 막히고 API는 409 `NEST_POINTS_NOT_ENOUGH`.
+2. **When** "🔒 N점으로 해금"을 누르면, **Then** 확인 창 없이 사고 바로 씌운다. 잔액이 줄고 기록에 "물건 사기 · 노을 −150". 같은 물건을 다시 사면 409 `NEST_ITEM_ALREADY_OWNED`. (2026-10-14 고침: 전에는 [사기] → 확인 창 → [장착])
+3. **When** 배경·둥지에서 [적용]을 누르면, **Then** 하나로 바뀌고 그 물건 단추는 "적용 중"(누를 수 없음). 새 장식에서 [착용]을 누르면 더해지고(같은 자리 새 장식은 화면이 바꿔 단다, 서버는 두 개 오면 400 `NEST_SLOT_TAKEN`) 단추는 초록 [착용 해제]가 된다. 사지 않은 물건은 400 `NEST_ITEM_NOT_OWNED`. (2026-10-14 고침: 전에는 [장착]·[내리기])
+4. **Given** 포인트 기록이 많으면, **Then** 처음 5개만 보이고 [더 보기]마다 10개씩 더 보인다. (2026-10-14)
 
 ### User Story 3 - 둥지와 새 보여 주기 (P2)
 
@@ -81,12 +87,17 @@
 | getMemberNest | `GET /api/members/{handle}/nest` (누구나) | `{level, levelName, streakDays, background, nestType, decorations[]}` · 없는 주인 404 |
 | getMyNest | `GET /api/me/nest` | `{nest, balance, attendedToday, bestStreakDays, daysToGrow, today[{reason,count,cap,points}], items[{code,kind,name,price,owned,equipped}]}` |
 | attend | `POST /api/me/nest/attendance` | `{attended, pointsGained, grew, me}` · 같은 날 다시 부르면 `attended:false` |
-| listMyNestPoints | `GET /api/me/nest/points?before={id}` | `{items[{id,reason,label,amount,createdAt}], nextBefore}` 30개씩 새것부터 |
+| listMyNestPoints | `GET /api/me/nest/points?before={id}` | `{items[{id,reason,label,amount,createdAt}], nextBefore}` 30개씩 새것부터 (화면은 5개 → [더 보기]마다 10개씩 보이고, 받은 것을 다 보이면 다음 쪽을 부른다) |
 | buyNestItem | `POST /api/me/nest/items/{code}` | MyNest · 400 `NEST_ITEM_UNKNOWN`, 409 `NEST_ITEM_ALREADY_OWNED`·`NEST_POINTS_NOT_ENOUGH` |
 | equipNest | `PUT /api/me/nest/equipped` `{background, nestType, decorations[]}` | MyNest · 400 `NEST_ITEM_NOT_OWNED`·`NEST_SLOT_TAKEN` |
+
+시험용 `PUT /api/me/nest/dev/level`·`POST /api/me/nest/dev/points`는 `blog.nest.dev-tools=true`(로컬 설정)일 때만 생긴다.
 
 `/api/me/**`는 로그인 필요(401), 쓰기는 정지·탈퇴 유예 403(`ACCOUNT_WRITE`). 응답 `Cache-Control: private, no-store`(남의 둥지는 `no-cache`).
 
 ## 화면 규칙
 
 - 그림은 `frontend/src/features/nest/art/*.png`(물건 코드 이름). 둥지 그림은 뒤쪽 통째·앞쪽 아래만 두 번 놓아 새가 둥지 안에 앉아 보이게 한다. 배경색은 `tokens.css`의 `--nest-bg-*`·`--nest-ground` 라이트·다크 쌍만. 화면 문구는 "블로그" 대신 "둥지".
+- 화면 이름은 "새 키우기"(`/nest`, 계정 메뉴 같은 글자). 꾸미기는 [배경]·[둥지]·[새 장식] 탭.
+- 단추(2026-10-14, PR #126): 없는 물건 "🔒 N점으로 해금"(모자라면 "🔒 N점 모자라요"로 막힘), 배경·둥지 [적용] / "적용 중", 새 장식 [착용] / [착용 해제]. 해금 단추와 [착용 해제]는 채운 초록(`--color-brand-fill`).
+- 포인트 기록: 처음 5개, [더 보기]마다 10개씩. 빨리 두 번 눌러도 같은 기록이 겹치지 않게 번호로 거른다.

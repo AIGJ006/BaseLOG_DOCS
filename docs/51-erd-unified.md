@@ -2,6 +2,8 @@
 
 > 2026-10-07 · **기준: ERD Cloud "ai blog" 최신 상태** · 20개 테이블 / 148개 컬럼 / 40개 FK.
 > ERD Cloud 원본: [erdcloud-export.sql](../erd/erdcloud-export.sql) (PK·FK 포함 내보내기). ERD Cloud에 칸이 없는 UNIQUE·CHECK·ON DELETE·인덱스는 [V1](../erd/V1__common_schema.sql)이 기준이다. 원문 01~45는 수정하지 않는다.
+>
+> **2026-10-15 덧붙임:** V1 뒤 마이그레이션(V2~V14)으로 바뀐 것은 맨 아래 [§ V1 이후 바뀐 것](#v1-이후-바뀐-것-v2v14-나민서-개인-확장)에 모았다. 이 문서 본문의 ERD·표·개수(20개 테이블 / 40개 FK)는 V1 기준 그대로다.
 
 표기: ERD Cloud는 `DATETIME`, PostgreSQL은 `timestamptz`; 지금 시각 기본값은 `CURRENT_TIMESTAMP`. 사건 시각의 NULL과 기본값 없음은 유지한다. `PK1, PK2`는 복합 키 순서이며, 모든 FK의 삭제 동작을 명시한다. 원문에서 생략된 삭제 동작은 팀 결정에 따라 `RESTRICT`로 쓴다. 현재 시각 기본값은 INSERT에만 적용되고 `updated_at`의 후속 갱신은 애플리케이션이 수행한다.
 
@@ -1679,3 +1681,166 @@ COMMENT ON COLUMN notification_mute.type IS '끈 알림 종류';
 
 COMMENT ON COLUMN notification_mute.created_at IS '생성 일자';
 ```
+
+
+## V1 이후 바뀐 것 (V2~V14, 나민서 개인 확장)
+
+2026-10-15 덧붙임. 위 본문(1~4절, ERD 변경 제안)은 V1 기준이며 고치지 않았다. 아래 내용은 모두 baselog 저장소 `backend/src/main/resources/db/migration` 의 `V2`~`V14` SQL과 그 주석에서 옮겼다. 날짜는 SQL 주석에 적힌 것만 썼고, 없으면 "—"로 두었다. 표기는 위 컬럼표와 같다(`timestamptz` → `DATETIME`, `GENERATED ALWAYS AS IDENTITY` → `AUTO_INCREMENT`).
+
+### 요약
+
+| V번호 | 날짜 | 무엇 | 관련 스펙 |
+| --- | --- | --- | --- |
+| V2 | — | `shedlock` 새 테이블 (배치 실행 잠금, 인프라 테이블) | 001 (T012) |
+| V3 | — | `category` 새 테이블, `post.category_id` 컬럼·FK·인덱스 추가 | 017 |
+| V4 | — | `post_attachment`·`attachment_trash` 새 테이블, 첨부 삭제 시 키를 남기는 트리거 | 018 |
+| V5 | — | 데이터만: `post.thumbnail_url` 자동 값을 모두 NULL로 | 019 |
+| V6 | 2026-10-12 | 팔로우 → 친구: `follow` 행 삭제, 알림 종류 CHECK에서 FOLLOW 빼고 FRIEND_REQUEST·FRIEND_ACCEPTED 추가, group CHECK를 LIKE만으로 | 020 |
+| V7 | 2026-10-13 | `post.visibility`·`member.default_visibility` CHECK에 FRIENDS 추가, `ix_post_blog_friends` 인덱스 | 004 (US8) |
+| V8 | 2026-10-13 | `comment.secret` 컬럼 추가 | 007 |
+| V9 | 2026-10-13 | `nest`·`nest_point`·`nest_item` 새 테이블 | 021 |
+| V10 | 2026-10-13 | 데이터만: 관리자 계정에 2890점(ADJUST) 한 번 지급 | 021 |
+| V11 | 2026-10-13 | 데이터만: 판매에서 뺀 물건 산 기록마다 환불 ADJUST 한 줄 | 021 |
+| V12 | 2026-10-14 | `inquiry` 새 테이블, 알림 종류 CHECK에 INQUIRY_ANSWERED 추가 | 023 |
+| V13 | 2026-10-14 | `site_visit_daily` 새 테이블 | 024 |
+| V14 | 2026-10-15 | `image.purpose` CHECK에 BANNER 추가, `uq_image_banner_current` 부분 유일 인덱스 | 025 |
+
+V2~V14 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`, `post_attachment`, `attachment_trash`, `nest`, `nest_point`, `nest_item`, `inquiry`, `site_visit_daily`)를 더해 29개다. 새 FK는 `fk_category_member`, `fk_category_parent`, `fk_post_category`, `fk_post_attachment_post`, `fk_nest_member`, `fk_nest_point_member`, `fk_nest_item_member`, `fk_inquiry_member`, `fk_inquiry_image`, `fk_inquiry_answered_by` 10개다. 위 1절 mermaid 그림에는 넣지 않았다.
+
+### 새 테이블
+
+#### shedlock — 배치 실행 잠금 (인프라, 4개) · V2
+
+업무 데이터가 아닌 인프라 테이블이며 002·003·006·014·015 배치가 함께 쓴다(V2 주석). 테이블 주석: '배치 실행 잠금 (ShedLock JDBC)'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | name | 잠금 이름 | VARCHAR(64) | 불가 | — | PK1 | — | PK | V2 |
+| 2 | lock_until | 잠금 만료 일자 | DATETIME | 불가 | — | — | — | — | V2 |
+| 3 | locked_at | 잠근 일자 | DATETIME | 불가 | — | — | — | — | V2 |
+| 4 | locked_by | 잠근 주체 | VARCHAR(255) | 불가 | — | — | — | — | V2 |
+
+#### category — 카테고리 (글 부속, 8개) · V3
+
+2단계 카테고리. 제약·인덱스: `ck_category_name` CHECK (char_length(name) BETWEEN 1 AND 30), `ck_category_parent_self` CHECK (parent_id IS NULL OR parent_id <> id), `ck_category_position` CHECK (position >= 0); `uq_category_sibling_name` UNIQUE (member_id, COALESCE(parent_id, 0), name_key) — 같은 상위 안에서 대소문자 무시 이름 유일(FR-004); `ix_category_member` (member_id, parent_id, position); `ix_category_parent` (parent_id) WHERE parent_id IS NOT NULL.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | id | 카테고리 번호 | BIGINT | 불가 | AUTO_INCREMENT | PK1 | — | PK, 자동 증가 | V3 (017) |
+| 2 | member_id | 회원 번호 | BIGINT | 불가 | — | FK | member(id); CASCADE | FK → member | V3 (017) |
+| 3 | parent_id | 상위 카테고리 번호 | BIGINT | 허용 | — | FK | category(id); RESTRICT | FK → category (자기 참조). NULL이면 최상위, 자기 자신 금지 | V3 (017) |
+| 4 | name | 이름 | VARCHAR(30) | 불가 | — | — | — | 1~30자 | V3 (017) |
+| 5 | name_key | 비교용 이름 | VARCHAR(60) | 불가 | — | UQ(복합) | — | 형제 간 대소문자 무시 유일 판단용 | V3 (017) |
+| 6 | position | 순서 | INT | 불가 | — | — | — | 0 이상 | V3 (017) |
+| 7 | created_at | 생성 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V3 (017) |
+| 8 | updated_at | 수정 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V3 (017) |
+
+#### post_attachment — 글 첨부파일 (글 부속, 6개) · V4
+
+파일은 사진 저장소(같은 버킷)의 `attachments/` 아래에 두고 익명 읽기를 열지 않는다. 내려받기는 앱이 권한을 확인한 뒤 전달한다(V4 주석). 제약·인덱스: `uq_post_attachment_key` UNIQUE (storage_key), `ck_post_attachment_name` CHECK (char_length(original_name) BETWEEN 1 AND 255), `ck_post_attachment_size` CHECK (size_bytes BETWEEN 1 AND 10485760); `ix_post_attachment_post` (post_id, id). 트리거 `tr_post_attachment_deleted`(AFTER DELETE, FOR EACH ROW)가 함수 `queue_attachment_file()`로 지운 행의 `storage_key`를 `attachment_trash`에 넣는다(ON CONFLICT DO NOTHING).
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | id | 첨부 번호 | BIGINT | 불가 | AUTO_INCREMENT | PK1 | — | PK, 자동 증가 | V4 (018) |
+| 2 | post_id | 글 번호 | BIGINT | 불가 | — | FK | post(id); CASCADE | FK → post | V4 (018) |
+| 3 | storage_key | 저장 경로 | VARCHAR(200) | 불가 | — | UQ | — | 유일 | V4 (018) |
+| 4 | original_name | 원래 파일 이름 | VARCHAR(255) | 불가 | — | — | — | 1~255자 | V4 (018) |
+| 5 | size_bytes | 파일 크기 | BIGINT | 불가 | — | — | — | 1바이트~10485760바이트(10MB) | V4 (018) |
+| 6 | created_at | 생성 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V4 (018) |
+
+#### attachment_trash — 지울 첨부파일 목록 (글 부속, 2개) · V4
+
+첨부 행이 어떤 경로로 지워지든(직접 삭제, 글 완전 삭제·빈 임시글 정리의 CASCADE) 트리거가 키를 남기고, 정리 작업이 저장소에서 지운 뒤 이 행을 지운다(FR-012). FK 없음.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | storage_key | 저장 경로 | VARCHAR(200) | 불가 | — | PK1 | — | 지울 파일의 저장 경로 | V4 (018) |
+| 2 | queued_at | 넣은 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V4 (018) |
+
+#### nest — 둥지 (둥지, 9개) · V9
+
+회원당 한 줄: 새 크기(1~4)·연속 출석·장착한 배경과 둥지. 처음 출석하거나 포인트를 받을 때 생긴다(V9 주석). 제약: `ck_nest_level` CHECK (bird_level BETWEEN 1 AND 4), `ck_nest_streak` CHECK (streak_days >= 0 AND best_streak_days >= streak_days). 테이블 주석: '둥지(새 크기·연속 출석·장착한 배경과 둥지)'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | member_id | 회원 번호 | BIGINT | 불가 | — | PK1, FK | member(id); CASCADE | PK + FK → member (회원당 한 줄) | V9 (021) |
+| 2 | bird_level | 새 크기 | SMALLINT | 불가 | 1 | — | — | 1~4 | V9 (021) |
+| 3 | streak_days | 연속 출석 일수 | INT | 불가 | 0 | — | — | 0 이상 | V9 (021) |
+| 4 | best_streak_days | 최장 연속 출석 일수 | INT | 불가 | 0 | — | — | streak_days 이상 | V9 (021) |
+| 5 | last_attended_on | 마지막 출석 날짜 | DATE | 허용 | — | — | — | — | V9 (021) |
+| 6 | background | 장착 배경 | VARCHAR(30) | 불가 | 'bg-basic' | — | — | 장착한 배경 물건 코드 | V9 (021) |
+| 7 | nest_type | 장착 둥지 | VARCHAR(30) | 불가 | 'nest-basic' | — | — | 장착한 둥지 물건 코드 | V9 (021) |
+| 8 | created_at | 생성 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V9 (021) |
+| 9 | updated_at | 수정 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V9 (021) |
+
+#### nest_point — 둥지 포인트 기록 (둥지, 7개) · V9
+
+잔액 칸을 두지 않고 기록의 합으로 센다. 쓰면(PURCHASE) 음수, 되돌리면(ADJUST) 반대 부호 한 줄을 더한다(V9 주석). 제약·인덱스: `uq_nest_point_source` UNIQUE (member_id, source_key) — 같은 까닭으로 두 번 받지 않음; `ck_nest_point_reason` CHECK (reason IN ('ATTENDANCE', 'STREAK_BONUS', 'POST', 'COMMENT', 'LIKE_RECEIVED', 'PURCHASE', 'ADJUST')); `ck_nest_point_amount` CHECK (amount <> 0); `ix_nest_point_member` (member_id, id DESC); `ix_nest_point_day` (member_id, reason, earned_on). 테이블 주석: '둥지 포인트 기록(합이 잔액)'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | id | 기록 번호 | BIGINT | 불가 | AUTO_INCREMENT | PK1 | — | PK, 자동 증가 | V9 (021) |
+| 2 | member_id | 회원 번호 | BIGINT | 불가 | — | FK, UQ(복합) | member(id); CASCADE | FK → member | V9 (021) |
+| 3 | reason | 까닭 | VARCHAR(20) | 불가 | — | — | — | ATTENDANCE / STREAK_BONUS / POST / COMMENT / LIKE_RECEIVED / PURCHASE / ADJUST | V9 (021) |
+| 4 | amount | 점수 | INT | 불가 | — | — | — | 0이 아님. PURCHASE는 음수 | V9 (021) |
+| 5 | source_key | 출처 키 | VARCHAR(80) | 불가 | — | UQ(복합) | — | (회원, source_key) 유일 — 중복 지급 방지 | V9 (021) |
+| 6 | earned_on | 받은 날짜 | DATE | 불가 | — | — | — | 서비스 시간대(Asia/Seoul) 날짜, 하루 상한 계산용 | V9 (021) |
+| 7 | created_at | 생성 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V9 (021) |
+
+#### nest_item — 산 둥지 꾸미기 물건 (둥지, 4개) · V9
+
+값이 0인 기본 물건은 사지 않아도 가진 것으로 보고 여기 두지 않는다. 소품·새 장식의 장착 여부는 `equipped`, 배경·둥지의 장착은 `nest.background`·`nest.nest_type`(V9 주석). 테이블 주석: '산 둥지 꾸미기 물건'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | member_id | 회원 번호 | BIGINT | 불가 | — | PK1, FK | member(id); CASCADE | PK + FK → member | V9 (021) |
+| 2 | item_code | 물건 코드 | VARCHAR(30) | 불가 | — | PK2 | — | — | V9 (021) |
+| 3 | equipped | 장착 여부 | BOOLEAN | 불가 | false | — | — | 소품·새 장식만 이 칸으로 장착 | V9 (021) |
+| 4 | bought_at | 산 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V9 (021) |
+
+#### inquiry — 문의·신고 (운영, 11개) · V12
+
+회원이 버그·계정 문의·사용자 신고·기타를 보내고, 관리자가 답하면 알림으로 알린다(V12 주석). 제약·인덱스: `ck_inquiry_category` CHECK (category IN ('BUG', 'ACCOUNT', 'USER_REPORT', 'OTHER')), `ck_inquiry_status` CHECK (status IN ('RECEIVED', 'ANSWERED')), `ck_inquiry_answer` CHECK ((status = 'ANSWERED') = (answer IS NOT NULL AND answered_at IS NOT NULL)), `ck_inquiry_target` CHECK (target_handle IS NULL OR category = 'USER_REPORT'); `ix_inquiry_member` (member_id, id DESC) — 내가 보낸 문의; `ix_inquiry_status` (status, id DESC) — 관리자 목록. 테이블 주석: '문의·신고'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | id | 문의 번호 | BIGINT | 불가 | AUTO_INCREMENT | PK1 | — | PK, 자동 증가 | V12 (023) |
+| 2 | member_id | 회원 번호 | BIGINT | 불가 | — | FK | member(id); CASCADE | FK → member. 보낸 회원 | V12 (023) |
+| 3 | category | 종류 | VARCHAR(20) | 불가 | — | — | — | BUG(버그 신고) / ACCOUNT(계정 문의) / USER_REPORT(사용자 신고) / OTHER(기타) | V12 (023) |
+| 4 | content | 내용 | TEXT | 불가 | — | — | — | — | V12 (023) |
+| 5 | target_handle | 신고할 사람 블로그 주소 | VARCHAR(39) | 허용 | — | — | — | 사용자 신고일 때만. @ 뺀 소문자 | V12 (023) |
+| 6 | image_id | 붙인 사진 번호 | BIGINT | 허용 | — | FK | image(id); SET NULL | FK → image. 글 사진 한 장, 지워지면 NULL | V12 (023) |
+| 7 | status | 상태 | VARCHAR(20) | 불가 | 'RECEIVED' | — | — | RECEIVED(접수) / ANSWERED(답변 완료) | V12 (023) |
+| 8 | answer | 관리자 답변 | TEXT | 허용 | — | — | — | ANSWERED일 때만 채움 | V12 (023) |
+| 9 | answered_by | 답한 관리자 회원 번호 | BIGINT | 허용 | — | FK | member(id); SET NULL | FK → member | V12 (023) |
+| 10 | answered_at | 답한 일자 | DATETIME | 허용 | — | — | — | ANSWERED일 때만 채움 | V12 (023) |
+| 11 | created_at | 생성 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V12 (023) |
+
+#### site_visit_daily — 일별 방문자 수 (반응·통계, 4개) · V13
+
+누가 왔는지는 담지 않는다. 그날 방문자는 Redis HyperLogLog(`stats:visit:{yyyyMMdd}`)로 세고, 5분마다 그 수만 여기 옮긴다. 값은 줄어들지 않는다(옮길 때 큰 값을 남긴다)(V13 주석). 제약: `ck_site_visit_daily_counts` CHECK (visitors >= 0 AND member_visitors >= 0). FK 없음. 테이블 주석: '일별 방문자 수'.
+
+| 순서 | 물리명 | 논리명 | 타입(ERD Cloud 표기) | NULL | 기본값 | 키 | 참조·ON DELETE | 설명 | 출처 문서 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | visit_date | 방문 일자 | DATE | 불가 | — | PK1 | — | 서비스 시간대(Asia/Seoul) 날짜 | V13 (024) |
+| 2 | visitors | 방문자 수 | INT | 불가 | — | — | — | 회원·비회원, 0 이상 | V13 (024) |
+| 3 | member_visitors | 로그인 회원 수 | INT | 불가 | — | — | — | 그중 로그인 회원, 0 이상 | V13 (024) |
+| 4 | updated_at | 수정 일자 | DATETIME | 불가 | CURRENT_TIMESTAMP | — | — | — | V13 (024) |
+
+### 기존 테이블 변경
+
+- **post.category_id** (V3, 017): `BIGINT` NULL 허용 컬럼 추가. `fk_post_category` → category(id) ON DELETE SET NULL — 카테고리를 지우면 글은 분류 없음(FR-011). 인덱스 `ix_post_category` (category_id, first_public_at DESC, id DESC) WHERE category_id IS NOT NULL AND deleted_at IS NULL.
+- **post.thumbnail_url** (V5, 019, 데이터만): 이제 작성자가 고른 값만 담는다. 지금까지 본문 첫 사진으로 자동으로 채운 값을 `UPDATE post SET thumbnail_url = NULL`로 모두 비웠다. 스키마는 그대로다.
+- **follow** (V6, 020): `DELETE FROM follow`로 행을 모두 지웠다. 테이블은 팀 ERD에 맞춰 남겨 두었고, 친구로 자동으로 옮기지 않았다. 코드는 이제 follow를 읽거나 쓰지 않는다(탈퇴 정리의 DELETE만 남음, V6 주석).
+- **notification / notification_mute 종류** (V6, 020): FOLLOW 알림 행과 FOLLOW 끄기 설정 행을 지웠다. 다시 만든 CHECK:
+  - `ck_notification_type`: ('COMMENT', 'REPLY', 'LIKE', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'NEW_POST', 'REPORT_RESOLVED', 'CONTENT_HIDDEN') — FOLLOW 빠짐, FRIEND_REQUEST·FRIEND_ACCEPTED 추가.
+  - `ck_notification_group`: ((type = 'LIKE') = (group_key IS NOT NULL)) — 두 친구 알림은 한 건짜리라 group_key가 없고, 묶음은 이제 LIKE만.
+  - `ck_notification_mute_type`: ('COMMENT', 'REPLY', 'LIKE', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'NEW_POST').
+- **notification 종류** (V12, 023): `ck_notification_type`에 'INQUIRY_ANSWERED'를 더해 다시 만들었다(NOT VALID 후 VALIDATE). 문의 답변 알림은 운영 알림이라 끌 수 없으며 `ck_notification_mute_type`은 그대로다.
+- **post.visibility / member.default_visibility** (V7, 004 US8): `ck_post_visibility`, `ck_member_default_visibility`를 ('PUBLIC', 'FRIENDS', 'PRIVATE')로 넓혔다. 기존 행은 바꾸지 않았다. 친구가 보는 블로그 목록용 부분 인덱스 `ix_post_blog_friends` ON post (author_id, published_at DESC, id DESC) WHERE status = 'PUBLISHED' AND visibility IN ('PUBLIC', 'FRIENDS') AND deleted_at IS NULL AND hidden_at IS NULL.
+- **comment.secret** (V8, 007): `BOOLEAN NOT NULL DEFAULT false` 컬럼 추가(컬럼 주석 '비밀 댓글 여부'). 기존 댓글은 모두 공개 댓글로 남는다.
+- **image.purpose** (V14, 025): `ck_image_purpose`를 ('POST', 'PROFILE', 'BANNER')로 다시 만들었다(NOT VALID 후 VALIDATE). member에 칸을 두지 않고 image 행의 용도와 연결 상태로 "지금 배너"를 정한다. 부분 유일 인덱스 `uq_image_banner_current` ON image (uploader_id) WHERE purpose = 'BANNER' AND status = 'ATTACHED' AND detached_at IS NULL — 회원당 지금 배너 최대 1장(조건은 `uq_image_profile_current`와 같음).
+- **nest_point 데이터** (V10·V11, 021, 데이터만):
+  - V10: role = 'ADMIN'인 회원에게 ADJUST 2890점 한 줄(source_key 'admin-grant:2026-10-13'). 2890 = 그때 파는 물건 값의 합(배경 800 + 둥지 850 + 소품 500 + 새 장식 740).
+  - V11: 판매에서 뺀 물건을 산 PURCHASE 기록(source_key 'BUY:<물건>', amount < 0)마다 반대 부호 ADJUST 한 줄(source_key 'REFUND:<물건>'). 지금 파는 14개 코드(bg-meadow, bg-sky, bg-sunset, bg-cherry, bg-night, nest-leaf, nest-flower, nest-snow, nest-ribbon, nest-star, acc-flower-crown, acc-ribbon, acc-crown, acc-flower-pin)는 제외. `nest_item` 행은 지우지 않는다.
+  - 둘 다 ON CONFLICT (member_id, source_key) DO NOTHING이라 다시 돌아도 두 번 들어가지 않는다.

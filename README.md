@@ -37,6 +37,12 @@
 | 019 | [post-thumbnail](specs/019-post-thumbnail/spec.md) 글 썸네일 지정 (나민서 개인 확장) | 민서 요청 2026-10-12 | 개인 확장 | 구현 ✓ |
 | 020 | [follow-to-friends](specs/020-follow-to-friends/spec.md) 팔로우 → 친구(요청 → 수락), 친구 공개 글 (나민서 개인 확장, 010 대체) | 01 C-FRIEND-1 | 개인 확장 | 구현 ✓ |
 | 021 | [nest-decor](specs/021-nest-decor/spec.md) 둥지 꾸미기·새 키우기 (나민서 개인 확장) | 민서 요청 2026-10-13 | 개인 확장 | 구현 ✓ |
+| 022 | [spell-check](specs/022-spell-check/spec.md) 맞춤법·띄어쓰기 검사 (나민서 개인 확장) | 민서 요청 2026-10-14 | 개인 확장 | 구현 ✓ |
+| 023 | [inquiry](specs/023-inquiry/spec.md) 문의·신고, 관리자 답변·알림 (나민서 개인 확장) | 민서 요청 2026-10-14 | 개인 확장 | 구현 ✓ |
+| 024 | [admin-stats](specs/024-admin-stats/spec.md) 관리자 통계(방문자·30일 그래프·많이 본 글) (나민서 개인 확장) | 민서 요청 2026-10-14 | 개인 확장 | 구현 ✓ |
+| 025 | [nest-banner](specs/025-nest-banner/spec.md) 둥지 배너 (나민서 개인 확장) | 민서 요청 2026-10-15 | 개인 확장 | 구현 ✓ |
+| 026 | [admin-members](specs/026-admin-members/spec.md) 관리자 회원 목록·[관리] 메뉴 (나민서 개인 확장) | 민서 요청 2026-10-13 | 개인 확장 | 구현 ✓ |
+| 027 | [settings-footer-terms](specs/027-settings-footer-terms/spec.md) 설정 세로 탭·꼬리말·이용약관 (나민서 개인 확장) | 민서 요청 2026-10-14 | 개인 확장 | 구현 ✓ |
 
 ERD(03, 51)는 각 스펙의 Implementation Notes에서 참조하며, `/speckit-plan` 단계의 `data-model.md`로 옮겨 갑니다. 카테고리·주제 등은 공통이 아닌 개인 확장(01 §2-4)이라 공통 스펙에 없습니다.
 
