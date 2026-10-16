@@ -47,16 +47,16 @@ flowchart TB
 
 | 모듈 | 맡은 기능 (스펙) | 주인 표 | 주요 API | 기대는 모듈 |
 |---|---|---|---|---|
-| **account** | 가입(이메일 코드·소셜)·로그인·비밀번호·이메일 인증, 프로필, 블로그 주소·닉네임 확인, 동의(약관·AI), 친구, 정지 상태, 탈퇴·복구 (001·015·020·027) | `member` `auth_identity` `member_agreement` `friendship` `member_suspension` (`follow`는 V6 뒤 안 씀) | `/api/auth/*` (signup-code, signup, csrf, social-signup, email-verification, password-reset), `/api/me`, `/api/me/profile`, `/api/handles/availability`, `/api/nicknames/availability`, `/api/members/{handle}/friend`, `/api/me/friends`, `/api/me/friend-requests`, `/api/me/agreements/ai` | media(프로필·배너 사진), post |
-| **post** | 글 쓰기·자동 저장·작업본·발행·수정·공개 범위(전체·친구·나만)·휴지통·완전 삭제·Markdown 미리보기 (002·004·005·006) | `post` `post_draft` | `POST /api/posts`, `/api/posts/{id}` (autosave, publish, working-copy, visibility, restore, permanent), `/api/me/posts`, `/api/me/trash`, `/api/markdown/preview` | account, media, tag |
-| **tag** | 태그 정규화·글-태그, 태그 목록·인기 태그, AI 태그 추천 (008·013) | `tag` `post_tag` | `/api/tags`, `/api/tags/trending`, `/api/tags/suggest`, `/api/tags/{name}/posts`, `/api/members/{handle}/tags`, `/api/posts/{id}/tag-suggestions` | account, post, discovery |
+| **account** | 가입(이메일 코드·소셜)·로그인·비밀번호·이메일 인증, 프로필, 블로그 주소·닉네임 확인, 동의(약관·AI), 친구, 정지 상태, 탈퇴·복구 (001·015·020·027) | `member` `auth_identity` `member_agreement` `friendship` `member_suspension` (`follow`는 V6 뒤 안 씀) | `/api/auth/*` (login·logout은 보안 필터, signup-code, signup, csrf, social-signup, social-providers, email-verification, password-reset), `/api/agreements/current`, `/api/me`(+profile, settings, password, agreements), `/api/me/withdraw`·`/api/me/withdrawal`·`/api/me/restore`, `/api/handles/availability`, `/api/nicknames/availability`, `/api/members/{handle}/friend`, `/api/me/friends`, `/api/me/friend-requests`, `/api/me/agreements/ai` | media(프로필·배너 사진), post |
+| **post** | 글 쓰기·자동 저장·작업본·발행·수정·공개 범위(전체·친구·나만)·휴지통·완전 삭제·Markdown 미리보기 (002·004·005·006) | `post` `post_draft` | `POST /api/posts`, `/api/posts/{id}`(읽기·휴지통으로) (autosave, publish, working-copy, visibility, restore, permanent), `/api/me/posts`, `/api/me/trash`, `/api/markdown/preview` | account, media, tag |
+| **tag** | 태그 정규화·글-태그, 태그 목록·인기 태그, AI 태그 추천 (008·013) | `tag` `post_tag` | `/api/tags`, `/api/tags/trending`, `/api/tags/suggest`, `/api/tags/{name}/posts`(+summary), `/api/members/{handle}/tags`, `/api/posts/{id}/tag-suggestions` | account, post, discovery |
 | **media** | 사진 올리기(presign → 직접 업로드 → complete), 글 사진·프로필·배너, 첨부파일, 저장 용량, 정리 작업 (003·018·025) | `image` `post_image` `post_attachment` `attachment_trash` | `/api/images/presign`, `/api/images/{id}/complete`, `/api/me/storage`, `/api/posts/{id}/attachments` (+download) | account, post |
 | **interaction** | 댓글·답글·비밀 댓글, 좋아요, 조회수(하루 한 번 세기) (007·009) | `comment` `post_like` `post_view_daily` | `/api/posts/{id}/comments`, `/api/comments/{id}`(+replies), `/api/posts/{id}/like`, `/api/posts/{id}/views` | account, media, post |
 | **discovery** | 홈 목록·둥지(블로그) 머리말·검색(글·사람)·친구 피드·인기 글·태그 페이지·사이트맵 (005·010·012·020·025) | (없음 — 읽기 전용) | `/api/posts`, `/api/posts/trending`, `/api/feed`, `/api/search/posts`, `/api/search/people`, `/api/members/{handle}`, `/api/members/{handle}/posts`, `/@{handle}`·`/tags`·`/sitemap.xml`(서버 렌더 메타) | account, post, tag, media, interaction, category |
 | **category** | 회원별 2단계 카테고리, 글의 카테고리, 둥지 카테고리 목록 (017) | `category` (+ `post.category_id`는 post가 씀) | `/api/me/categories`(+order), `/api/posts/{id}/category`, `/api/members/{handle}/categories` | account, post |
 | **moderation** | 신고 접수, 관리자 신고 처리·직접 숨김, 회원 정지·해제, 관리자 회원 목록·회원 화면 (014·026) | `report_case` `report` | `POST /api/reports`, `/api/admin/reports`(+resolution), `/api/admin/posts/{id}/hidden`, `/api/admin/comments/{id}/hidden`, `/api/admin/members`(+suspensions) | account(정지), post·interaction(숨김) |
-| **notification** | 🔔 인앱 알림: 댓글·답글·좋아요(묶음)·친구 요청/수락·친구 새 글·신고 결과·숨김·문의 답변, 끄기 설정 (011) | `notification` `notification_actor` `notification_mute` | `/api/notifications`(+unread-count, read, read-all), `/api/me/notification-settings` | 이벤트로 받음 + account·post·interaction 확인 |
-| **nest** | 출석·포인트·새 4단계·꾸미기 물건 사기·착용 (021) | `nest` `nest_point` `nest_item` | `/api/me/nest`(+attendance, points, items/{code}, equipped), `/api/members/{handle}/nest` | account, 이벤트(글·댓글·좋아요) |
+| **notification** | 🔔 인앱 알림: 댓글·답글·좋아요(묶음)·친구 요청/수락·친구 새 글·신고 결과·숨김·문의 답변, 끄기 설정 (011) | `notification` `notification_actor` `notification_mute` | `/api/notifications`(+unread-count, read, read-all, 하나 지우기), `/api/me/notification-settings` | 이벤트로 받음 + account·post·interaction 확인 |
+| **nest** | 출석·포인트·새 4단계·꾸미기 물건 사기·착용 (021) | `nest` `nest_point` `nest_item` | `/api/me/nest`(+attendance, points, items/{code}, equipped; dev/points·dev/level은 `blog.nest.dev-tools=true`일 때만), `/api/members/{handle}/nest` | account, 이벤트(글·댓글·좋아요) |
 | **inquiry** | 문의·신고 보내기, 내 문의 목록, 관리자 문의 목록·답변 (023) | `inquiry` | `/api/me/inquiries`, `/api/admin/inquiries`(+{id}, answer) | account, media(사진), moderation(관리자 확인) |
 | **stats** | 방문자 세기, 관리자 통계, 내 둥지 통계 (024·028) | `site_visit_daily` | `POST /api/visits`, `/api/admin/stats`, `/api/me/stats` | interaction, post, moderation(관리자 확인) |
 | **spellcheck** | 글쓰기 [맞춤법 검사] (022) | (없음 — 저장 안 함) | `POST /api/posts/{id}/spell-check` | post, tag(AI 공급자·한도·동의 공유) |
@@ -132,7 +132,7 @@ flowchart TB
 |---|---|---|
 | PostgreSQL | 전부 | 표 29개(V1 20 + V3~V13 9). Flyway V1~V19 (V15·V18은 칸 추가, V16·V17·V19는 환불 데이터) |
 | Redis | shared·account·post·interaction·tag·spellcheck·stats·inquiry 등 | 세션(Spring Session), 요청 한도 `ratelimit:*`, 가입 코드 `auth:signup*`, 자동 저장 버퍼 `autosave:*`, AI 한도·상태 `ai:*`, 방문자 HyperLogLog `stats:visit:*` |
-| MinIO (S3 API) | media | 사진(브라우저가 presigned URL로 직접 올림), 첨부(`attachments/`, 앱이 권한 확인 후 전달) |
+| MinIO (S3 API) | media | 사진(브라우저가 presigned URL로 직접 올림), 첨부(`attachments/`, 앱이 권한 확인 후 전달). 원문 04·23의 서버 경유 업로드 `PUT /api/images/{id}/content`(PROXY 모드)는 설정 값만 있고 경로는 아직 없다 |
 | Gemini / Ollama | tag(013), spellcheck(022) | 배포 서버는 Gemini, 로컬은 Ollama. 키·하루 한도 공유 |
 | SMTP (Gmail) | account | 가입 코드·비밀번호 재설정·탈퇴 안내 메일 |
 
@@ -143,4 +143,209 @@ flowchart TB
 1. 새 표가 필요하면 새 모듈(또는 주인 모듈)에 두고 Flyway V 번호를 dev에서 확인해 **추가만** 한다(무중단 배포).
 2. 다른 모듈 상태는 공개 Service로 묻고, 다른 모듈에 알려야 하면 `shared.event`에 이벤트를 더한다.
 3. 탈퇴 때 지울 데이터가 있으면 `WithdrawalPurgeStep`을 하나 만든다.
-4. 스펙은 `specs/NNN-이름/spec.md`, 이 문서 §2 표에 한 줄, 51 ERD 끝 절에 표를 더한다.
+4. 스펙은 `specs/NNN-이름/spec.md`, 이 문서 §2 표에 한 줄, §7 API 목록에 경로, 51 ERD 끝 절에 표를 더한다.
+
+---
+
+## 7. 전체 API 목록 (dev 8cf68e6 기준, 2026-10-16)
+
+컨트롤러의 `@*Mapping`을 그대로 모은 목록이다(로그인·로그아웃은 Spring Security 필터). 요청·응답 모양과 오류는 각 스펙의 `contracts/openapi.yaml`·spec.md API 표를 본다. 화면 주소(`/settings`, `/admin/**` 등)는 `SpaForwardingController`가 React로 넘기므로 여기 넣지 않는다. `/@{handle}`·`/tags`·`/search`·`/sitemap.xml`은 검색 엔진용 메타를 붙여 서버가 그린다.
+
+- `/api/me/nest/dev/*`는 `blog.nest.dev-tools=true`(로컬)일 때만 생긴다.
+- 원문 04·23과 003 스펙의 `PUT /api/images/{id}/content`(PROXY 모드)는 아직 만들지 않았다. 운영은 DIRECT(브라우저 → MinIO)만 쓴다.
+- 없앤 경로: 팔로우 `/api/members/{handle}/follow`·`followers`·`following`(020), 둥지에 새 보이기 설정 `PUT /api/me/nest/show-on-blog`(021, #162).
+
+#### account
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `POST` | `/api/auth/login` | 보안 필터 (`AccountSecurityCustomizer`) |
+| `POST` | `/api/auth/logout` | 보안 필터 (`AccountSecurityCustomizer`) |
+| `GET` | `/api/agreements/current` | AgreementController |
+| `GET` | `/api/auth/csrf` | AuthController |
+| `POST` | `/api/auth/email-verification` | AuthController |
+| `POST` | `/api/auth/email-verification/confirm` | AuthController |
+| `POST` | `/api/auth/password-reset` | AuthController |
+| `POST` | `/api/auth/password-reset/confirm` | AuthController |
+| `POST` | `/api/auth/signup` | AuthController |
+| `POST` | `/api/auth/signup-code` | AuthController |
+| `POST` | `/api/auth/signup-code/verify` | AuthController |
+| `GET` | `/api/auth/social-login-error` | SocialSignupController |
+| `GET` | `/api/auth/social-providers` | SocialSignupController |
+| `GET` | `/api/auth/social-signup` | SocialSignupController |
+| `POST` | `/api/auth/social-signup` | SocialSignupController |
+| `GET` | `/api/handles/availability` | AvailabilityController |
+| `GET` | `/api/me` | MeController |
+| `PUT` | `/api/me/agreements` | MeController |
+| `DELETE` | `/api/me/agreements/ai` | AiConsentController |
+| `GET` | `/api/me/agreements/ai` | AiConsentController |
+| `PUT` | `/api/me/agreements/ai` | AiConsentController |
+| `GET` | `/api/me/friend-requests` | FriendController |
+| `GET` | `/api/me/friends` | FriendController |
+| `POST` | `/api/me/password` | MeController |
+| `GET` | `/api/me/profile` | MeController |
+| `PATCH` | `/api/me/profile` | MeController |
+| `POST` | `/api/me/restore` | WithdrawalController |
+| `GET` | `/api/me/settings` | MeController |
+| `PATCH` | `/api/me/settings` | MeController |
+| `POST` | `/api/me/withdraw` | WithdrawalController |
+| `GET` | `/api/me/withdrawal` | WithdrawalController |
+| `DELETE` | `/api/members/{handle}/friend` | FriendController |
+| `GET` | `/api/members/{handle}/friend` | FriendController |
+| `PUT` | `/api/members/{handle}/friend` | FriendController |
+| `GET` | `/api/nicknames/availability` | AvailabilityController |
+
+#### post
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `POST` | `/api/markdown/preview` | MarkdownPreviewController |
+| `GET` | `/api/me/posts` | ManagePostController |
+| `GET` | `/api/me/trash` | ManagePostController |
+| `POST` | `/api/posts` | PostEditorController |
+| `DELETE` | `/api/posts/{postId}` | PostTrashController |
+| `GET` | `/api/posts/{postId}` | PostDetailController |
+| `PUT` | `/api/posts/{postId}/autosave` | AutosaveController |
+| `DELETE` | `/api/posts/{postId}/permanent` | PostTrashController |
+| `POST` | `/api/posts/{postId}/publish` | PublishController |
+| `POST` | `/api/posts/{postId}/restore` | PostTrashController |
+| `PUT` | `/api/posts/{postId}/visibility` | PostVisibilityController |
+| `DELETE` | `/api/posts/{postId}/working-copy` | PostEditorController |
+| `GET` | `/api/posts/{postId}/working-copy` | PostEditorController |
+| `PUT` | `/api/posts/{postId}/working-copy` | PostEditorController |
+
+#### tag
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/members/{handle}/tags` | BlogTagController |
+| `POST` | `/api/posts/{postId}/tag-suggestions` | TagSuggestionController |
+| `GET` | `/api/posts/{postId}/tag-suggestions/status` | TagSuggestionController |
+| `GET` | `/api/tags` | TagController |
+| `GET` | `/api/tags/suggest` | TagController |
+| `GET` | `/api/tags/trending` | TagController |
+| `GET` | `/api/tags/{name}/posts` | TagController |
+| `GET` | `/api/tags/{name}/summary` | TagController |
+
+#### media
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `POST` | `/api/images/presign` | ImageUploadController |
+| `POST` | `/api/images/{imageId}/complete` | ImageUploadController |
+| `GET` | `/api/me/storage` | StorageUsageController |
+| `GET` | `/api/posts/{postId}/attachments` | AttachmentController |
+| `POST` | `/api/posts/{postId}/attachments` | AttachmentController |
+| `DELETE` | `/api/posts/{postId}/attachments/{attachmentId}` | AttachmentController |
+| `GET` | `/api/posts/{postId}/attachments/{attachmentId}/download` | AttachmentController |
+
+#### interaction
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `DELETE` | `/api/comments/{commentId}` | CommentCommandController |
+| `PATCH` | `/api/comments/{commentId}` | CommentCommandController |
+| `GET` | `/api/comments/{rootId}/replies` | CommentController |
+| `GET` | `/api/posts/{postId}/comments` | CommentController |
+| `POST` | `/api/posts/{postId}/comments` | CommentController |
+| `DELETE` | `/api/posts/{postId}/like` | LikeController |
+| `PUT` | `/api/posts/{postId}/like` | LikeController |
+| `POST` | `/api/posts/{postId}/views` | ViewController |
+
+#### discovery
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/@{handle}` | PageShellController |
+| `GET` | `/@{handle}/posts/{postId}` | PageShellController |
+| `GET` | `/api/feed` | FeedController |
+| `GET` | `/api/members/{handle}` | BlogController |
+| `GET` | `/api/members/{handle}/posts` | BlogController |
+| `GET` | `/api/posts` | HomePostController |
+| `GET` | `/api/posts/trending` | TrendingController |
+| `GET` | `/api/search/people` | SearchController |
+| `GET` | `/api/search/posts` | SearchController |
+| `GET` | `/search` | PageShellController |
+| `GET` | `/sitemap.xml` | SitemapController |
+| `GET` | `/tags` | PageShellController |
+| `GET` | `/tags/{name}` | PageShellController |
+
+#### category
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/me/categories` | MyCategoryController |
+| `POST` | `/api/me/categories` | MyCategoryController |
+| `PUT` | `/api/me/categories/order` | MyCategoryController |
+| `DELETE` | `/api/me/categories/{categoryId}` | MyCategoryController |
+| `PATCH` | `/api/me/categories/{categoryId}` | MyCategoryController |
+| `GET` | `/api/members/{handle}/categories` | BlogCategoryController |
+| `GET` | `/api/posts/{postId}/category` | PostCategoryController |
+| `PUT` | `/api/posts/{postId}/category` | PostCategoryController |
+
+#### moderation
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `DELETE` | `/api/admin/comments/{commentId}/hidden` | AdminHideController |
+| `PUT` | `/api/admin/comments/{commentId}/hidden` | AdminHideController |
+| `GET` | `/api/admin/members` | AdminMemberController |
+| `GET` | `/api/admin/members/{handle}` | AdminMemberController |
+| `POST` | `/api/admin/members/{handle}/suspensions` | AdminMemberController |
+| `DELETE` | `/api/admin/members/{handle}/suspensions/current` | AdminMemberController |
+| `DELETE` | `/api/admin/posts/{postId}/hidden` | AdminHideController |
+| `PUT` | `/api/admin/posts/{postId}/hidden` | AdminHideController |
+| `GET` | `/api/admin/reports` | AdminReportController |
+| `GET` | `/api/admin/reports/{caseId}` | AdminReportController |
+| `POST` | `/api/admin/reports/{caseId}/resolution` | AdminReportController |
+| `POST` | `/api/reports` | ReportController |
+
+#### notification
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/me/notification-settings` | NotificationSettingsController |
+| `PUT` | `/api/me/notification-settings` | NotificationSettingsController |
+| `GET` | `/api/notifications` | NotificationController |
+| `POST` | `/api/notifications/read-all` | NotificationController |
+| `GET` | `/api/notifications/unread-count` | NotificationController |
+| `DELETE` | `/api/notifications/{notificationId}` | NotificationController |
+| `PUT` | `/api/notifications/{notificationId}/read` | NotificationController |
+
+#### nest
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/me/nest` | MyNestController |
+| `POST` | `/api/me/nest/attendance` | MyNestController |
+| `PUT` | `/api/me/nest/dev/level` | NestDevController |
+| `POST` | `/api/me/nest/dev/points` | NestDevController |
+| `PUT` | `/api/me/nest/equipped` | MyNestController |
+| `POST` | `/api/me/nest/items/{code}` | MyNestController |
+| `GET` | `/api/me/nest/points` | MyNestController |
+| `GET` | `/api/members/{handle}/nest` | MemberNestController |
+
+#### inquiry
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/admin/inquiries` | AdminInquiryController |
+| `GET` | `/api/admin/inquiries/{id}` | AdminInquiryController |
+| `POST` | `/api/admin/inquiries/{id}/answer` | AdminInquiryController |
+| `PUT` | `/api/admin/inquiries/{id}/answer` | AdminInquiryController |
+| `GET` | `/api/me/inquiries` | MyInquiryController |
+| `POST` | `/api/me/inquiries` | MyInquiryController |
+
+#### stats
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `GET` | `/api/admin/stats` | AdminStatsController |
+| `GET` | `/api/me/stats` | MyStatsController |
+| `POST` | `/api/visits` | VisitController |
+
+#### spellcheck
+
+| 방법 | 경로 | 컨트롤러 |
+|---|---|---|
+| `POST` | `/api/posts/{postId}/spell-check` | SpellCheckController |
