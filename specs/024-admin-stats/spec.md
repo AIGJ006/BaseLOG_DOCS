@@ -20,6 +20,10 @@
 - Q: 많이 본 글은? → A: 최근 7일 조회수가 많은 글 5개. 비회원이 볼 수 있는 전체 공개 글만(공용 `VisibilityFilter`). 친구 공개·비공개 글은 제목이 드러나지 않게 뺀다.
 - Q: Redis가 멈추면? → A: 방문 기록은 건너뛰고 화면을 막지 않는다. 옮기기는 그 회차를 건너뛴다. 통계는 DB에 옮겨 둔 수를 쓴다.
 
+### Session 2026-10-16 (자정 넘긴 방문, a79e714)
+
+- Q: 자정을 넘겨 계속 쓰면? → A: `SiteVisitBeacon`이 화면을 옮길 때마다 한국 날짜를 다시 확인한다. 날이 바뀌었으면 다음 화면에서 새 날 방문을 보낸다. 앞서 실패한 요청도 다음 화면에서 다시 보낸다. 보내는 중인 같은 요청은 겹쳐 보내지 않는다.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - 방문 기록 (P1)
@@ -28,6 +32,7 @@
 2. **Given** `vid` 쿠키가 없는 비회원, **When** 방문, **Then** 응답에 새 `vid` 쿠키. 다음 방문은 같은 사람으로 센다.
 3. **Given** 관리자 또는 `Googlebot`, **When** 방문, **Then** 세지 않는다(응답은 같은 204).
 4. **Given** 화면, **Then** 한국 시간 하루에 같은 브라우저·같은 회원은 한 번만 보낸다. 보내기에 실패하면 표시를 남기지 않아 다음 화면에서 다시 보낸다.
+5. **Given** 한국 23:59에 보낸 방문, **When** 00:01에 다른 화면으로 옮기면, **Then** 새 날 방문을 보낸다(`baselog.visit` = 다음 날짜).
 
 ### User Story 2 - 통계 보기 (P1)
 
@@ -58,7 +63,7 @@
 
 - **§1 테이블** `V13__site_visit_daily.sql` — `site_visit_daily(visit_date date PK, visitors integer, member_visitors integer, updated_at timestamptz)`, `visitors >= 0 AND member_visitors >= 0` 검사. 누가 왔는지는 담지 않는다. 새 테이블 하나만 더해 무중단 배포.
 - **§2 Redis** `stats:visit:{yyyyMMdd}` 그날 방문자, `stats:visit:{yyyyMMdd}:member` 그중 로그인 회원. 둘 다 HyperLogLog(`PFADD`/`PFCOUNT`), TTL 3일.
-- **§3 화면 저장** `localStorage` `baselog.visit` = `{한국 날짜}:{m회원번호|guest}`.
+- **§3 화면 저장** `localStorage` `baselog.visit` = `{한국 날짜}:{m회원번호|guest}`. 화면을 옮길 때마다 이 값을 오늘 한국 날짜와 견주어, 다르면 보낸다(2026-10-16). 보내기에 성공해야 적는다.
 - **§4 설정** `blog.stats.visit-flush-interval: 5m`. 일별 30일, 많이 본 글 5개는 코드 상수.
 
 ## API
@@ -86,4 +91,4 @@
 ## 시험
 
 - 백엔드: `StatsApiIT`(하루 한 번만 셈·쿠키 없는 비회원에게 vid·관리자와 봇 제외·옮긴 수가 DB에 남고 누적에 더해짐·회원·글·조회수와 많이 본 글(비공개 글 제외)·일반 회원 404, 비로그인 401). `FlywayBaselineIntegrationTest`에 V13.
-- 화면: `AdminStatsPage.test.tsx`(방문자 칸·활동 표·많이 본 글, 그래프를 글 조회수로 바꾸면 합계도 바뀜, 많이 본 글 없음 안내), `SiteVisitBeacon.test.tsx`(하루 한 번, 실패하면 다시, 관리자는 보내지 않음).
+- 화면: `AdminStatsPage.test.tsx`(방문자 칸·활동 표·많이 본 글, 그래프를 글 조회수로 바꾸면 합계도 바뀜, 많이 본 글 없음 안내), `SiteVisitBeacon.test.tsx`(하루 한 번, 실패하면 다시, 관리자는 보내지 않음, 실패한 뒤 화면을 옮기면 다시 보냄, 자정을 넘긴 뒤 화면을 옮기면 새 날 방문).

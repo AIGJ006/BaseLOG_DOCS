@@ -21,6 +21,11 @@
 - Q: 꼬리말은? → A: 모든 화면 맨 아래 가운데에 "GitHub · 이용약관". GitHub는 우리 GitHub Organization을 새 탭으로, 이용약관은 `/terms`로. 글쓰기 화면(`/write/…`)에는 넣지 않는다.
 - Q: 약관 본문은? → A: 확정 전 초안. `/terms` 화면과 설정 [이용약관] 탭이 같은 본문(`TermsContent`)을 쓴다. 두 곳 모두 "이 약관은 초안이에요. 확정되면 이 안내를 지워요".
 
+### Session 2026-10-16 (폰 너비 탭)
+
+- Q: 폰에서는 탭이 어디에 있나? → A: 폰 너비(640px 이하)에서는 한 줄 배치로 바뀌어 탭이 패널 위쪽에 가로 한 줄로 놓인다(PR #141). 탭은 나란히 늘어나고, 작은 그림은 숨기고, 위에 붙어 따라오지 않는다.
+- Q: 폰에서 방향키는? → A: 탭 목록 `aria-orientation`이 `horizontal`이 되고 왼쪽·오른쪽 방향키로 앞뒤 탭을 옮긴다. 위·아래 방향키로는 옮기지 않는다. 넓은 화면은 그대로 `vertical`·위·아래(6defb46, `useHorizontalTabs`).
+
 ## User Scenarios & Testing
 
 ### User Story 1 - 설정 탭 옮기기 (P1)
@@ -28,6 +33,7 @@
 1. **Given** `/settings`, **Then** 머리 "설정"과 "프로필과 계정, 화면, 알림, 이용약관을 한곳에서 관리해요.", 왼쪽에 탭 다섯 개. 프로필이 골라져 있다.
 2. **When** [계정]을 누르면, **Then** 주소가 `/settings?tab=account`로 바뀌고 계정 패널만 보인다.
 3. **When** 탭에서 위·아래 방향키, **Then** 앞뒤 탭으로 옮기며 고른다(끝에서 처음으로 돈다). Home·End는 처음·끝 탭.
+3a. **Given** 폰 너비(640px 이하), **Then** 탭은 위쪽 가로 한 줄이고 `aria-orientation`은 `horizontal`. **When** 왼쪽·오른쪽 방향키, **Then** 앞뒤 탭으로 옮기며 고른다. 위·아래 방향키는 탭을 옮기지 않는다.
 4. **Given** `/settings?tab=terms`, **Then** AI 동의와 그 아래 "이용약관" 본문(조 제목은 h3)이 보인다.
 5. **Given** 비로그인, **Then** `/login?returnTo=%2Fsettings`로 보낸다.
 
@@ -48,9 +54,9 @@
 
 ## Requirements
 
-- **FR-001** 설정 탭은 W3C 탭 패턴(`tablist` 세로, `tab`, `tabpanel`)을 따른다. 고른 탭만 `tabIndex` 0.
+- **FR-001** 설정 탭은 W3C 탭 패턴(`tablist` 세로, `tab`, `tabpanel`)을 따른다. 고른 탭만 `tabIndex` 0. 폰 너비(`(max-width: 640px)`, settings.css와 같은 조건)에서는 `useHorizontalTabs`로 `tablist`를 `horizontal`로 바꾸고 방향키도 왼쪽·오른쪽으로 바꾼다.
 - **FR-002** 탭을 고르면 `?tab=`을 `replace`로 바꾼다(뒤로 가기 기록을 쌓지 않음).
-- **FR-003** 넓은 화면 배치는 왼쪽 13rem 탭 + 오른쪽 패널. 탭 줄은 위에 붙어 따라온다(`sticky`).
+- **FR-003** 넓은 화면 배치는 왼쪽 13rem 탭 + 오른쪽 패널. 탭 줄은 위에 붙어 따라온다(`sticky`). 폰 너비(640px 이하)는 한 줄 배치 — 탭은 패널 위에 가로 한 줄(`sticky` 아님, 탭마다 늘어나고 아이콘 숨김).
 - **FR-004** 고른 탭·마우스를 올린 탭 바탕은 새 변수 `--color-nav-active-bg`(라이트 `#eef1f4`, 다크 `#2b2f33`), 고른 탭 글자는 `--color-brand`.
 - **FR-005** 닉네임 확인은 입력이 0.5초 멈춘 뒤 한 번만 묻는다. 앞뒤 공백은 떼고 묻는다. 빈 값·지금 닉네임은 묻지 않는다. 안내가 없어도 한 줄 자리를 잡아 아래 칸이 밀리지 않는다.
 - **FR-006** 서버의 닉네임 확인은 로그인한 회원이면 자기 닉네임을 중복에서 뺀다. 판정 순서: 형식 → 한글·영문 1자 → 예약어 → 금지어 → 중복(대소문자 무시).
@@ -75,6 +81,6 @@
 
 ## 시험
 
-- 화면: `SettingsPage.test.tsx`(탭 다섯 개·기본 프로필·`?tab=`, 방향키·Home·End, 이용약관 탭에 AI 동의와 본문, 닉네임 조건과 "지금 쓰는 닉네임이에요", 30일 제한), `AvailabilityHint.test.tsx`(0.5초 뒤 한 번, 사용 가능, 429면 표시 없음, 빈 값, 지금 값이면 묻지 않음), `SiteFooter.test.tsx`(GitHub 새 탭, `/terms` 링크, 글쓰기 화면엔 없음).
+- 화면: `SettingsPage.test.tsx`(탭 다섯 개·기본 프로필·`?tab=`, 방향키·Home·End, 넓은 화면은 `vertical`, 폰 너비는 `horizontal`·왼쪽·오른쪽 방향키, 이용약관 탭에 AI 동의와 본문, 닉네임 조건과 "지금 쓰는 닉네임이에요", 30일 제한), `AvailabilityHint.test.tsx`(0.5초 뒤 한 번, 사용 가능, 429면 표시 없음, 빈 값, 지금 값이면 묻지 않음), `SiteFooter.test.tsx`(GitHub 새 탭, `/terms` 링크, 글쓰기 화면엔 없음).
 - 백엔드: `AvailabilityIntegrationTest`, `NicknamePolicyTest`(닉네임 판정).
 - e2e: `account-responsive.spec.ts`(설정 화면 가로 스크롤 없음), `theme.spec.ts`·`notification.spec.ts`·`withdraw.spec.ts`(해당 탭 주소 `?tab=…`로 바로 열도록 고침).
