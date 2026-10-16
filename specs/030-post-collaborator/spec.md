@@ -8,6 +8,8 @@
 
 **Input**: 민서 요청(2026-10-16) "공동작업자 기능" — 마감 날이라 작은 범위로(코디네이터 추천안, 민서 "ㄱㄱ"). 처음 설계의 나민서 개인 확장 후보 "공동 작업자"([docs/01-common-requirements.md](../../docs/01-common-requirements.md) §2-4 `post_collaborator`)를 만든다. 공통 스펙과 원문 docs/는 바꾸지 않는다(constitution I).
 
+**공통 스펙 예외**: FR-003~FR-005는 [002 FR-036](../002-post-authoring/spec.md)(저장·발행·변경 취소는 작성자만)의 공동 작업자 예외다. 공동 작업자는 등록 글에서만 자동 저장·저장·변경 취소·등록을 할 수 있고, 그 밖의 일(FR-006)은 그대로 작성자만 한다.
+
 ## Clarifications
 
 ### Session 2026-10-16
