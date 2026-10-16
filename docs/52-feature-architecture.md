@@ -1,7 +1,7 @@
 # 기능별 아키텍처 (모듈 지도)
 
 > 2026-10-15 · **기준: BaseLOG `dev` 243e468** (백엔드 `backend/src/main/java/com/team/blog/`, 프런트 `frontend/src/`).
-> 전체 구조·원칙은 [02-architecture.md](./02-architecture.md), 표 정의는 [51-erd-unified.md](./51-erd-unified.md)(V1) + 그 끝의 "V1 이후 바뀐 것"(V2~V14)을 본다. 이 문서는 **기능(모듈)마다 무엇을 맡고, 어느 표를 쓰고, 어떤 API를 내고, 누구에게 기대는지**를 한곳에 모은다.
+> 전체 구조·원칙은 [02-architecture.md](./02-architecture.md), 표 정의는 [51-erd-unified.md](./51-erd-unified.md)(V1) + 그 끝의 "V1 이후 바뀐 것"(V2~V19)을 본다. 이 문서는 **기능(모듈)마다 무엇을 맡고, 어느 표를 쓰고, 어떤 API를 내고, 누구에게 기대는지**를 한곳에 모은다.
 
 ---
 
@@ -32,7 +32,7 @@ flowchart TB
     SH[shared<br/>보안·오류·이벤트·탈퇴 정리 틀]
   end
 
-  API --> PG[(PostgreSQL + Flyway V1~V14)]
+  API --> PG[(PostgreSQL + Flyway V1~V19)]
   API --> RD[(Redis<br/>세션·한도·자동 저장·HLL)]
   MED --> S3[(MinIO 사진·첨부)]
   TAG & SPELL --> AI[(Gemini / Ollama)]
@@ -130,7 +130,7 @@ flowchart TB
 
 | 대상 | 쓰는 모듈 | 무엇 |
 |---|---|---|
-| PostgreSQL | 전부 | 표 29개(V1 20 + V3~V13 9). Flyway V1~V14 |
+| PostgreSQL | 전부 | 표 29개(V1 20 + V3~V13 9). Flyway V1~V19 (V15·V18은 칸 추가, V16·V17·V19는 환불 데이터) |
 | Redis | shared·account·post·interaction·tag·spellcheck·stats·inquiry 등 | 세션(Spring Session), 요청 한도 `ratelimit:*`, 가입 코드 `auth:signup*`, 자동 저장 버퍼 `autosave:*`, AI 한도·상태 `ai:*`, 방문자 HyperLogLog `stats:visit:*` |
 | MinIO (S3 API) | media | 사진(브라우저가 presigned URL로 직접 올림), 첨부(`attachments/`, 앱이 권한 확인 후 전달) |
 | Gemini / Ollama | tag(013), spellcheck(022) | 배포 서버는 Gemini, 로컬은 Ollama. 키·하루 한도 공유 |

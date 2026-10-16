@@ -3,7 +3,7 @@
 > 2026-10-07 · **기준: ERD Cloud "ai blog" 최신 상태** · 20개 테이블 / 148개 컬럼 / 40개 FK.
 > ERD Cloud 원본: [erdcloud-export.sql](../erd/erdcloud-export.sql) (PK·FK 포함 내보내기). ERD Cloud에 칸이 없는 UNIQUE·CHECK·ON DELETE·인덱스는 [V1](../erd/V1__common_schema.sql)이 기준이다. 원문 01~45는 수정하지 않는다.
 >
-> **2026-10-15 덧붙임:** V1 뒤 마이그레이션(V2~V14)으로 바뀐 것은 맨 아래 [§ V1 이후 바뀐 것](#v1-이후-바뀐-것-v2v14-나민서-개인-확장)에 모았다. 이 문서 본문의 ERD·표·개수(20개 테이블 / 40개 FK)는 V1 기준 그대로다.
+> **2026-10-15 덧붙임(2026-10-16 V19까지 갱신):** V1 뒤 마이그레이션(V2~V19)으로 바뀐 것은 맨 아래 [§ V1 이후 바뀐 것](#v1-이후-바뀐-것-v2v19-나민서-개인-확장)에 모았다. 이 문서 본문의 ERD·표·개수(20개 테이블 / 40개 FK)는 V1 기준 그대로다.
 
 표기: ERD Cloud는 `DATETIME`, PostgreSQL은 `timestamptz`; 지금 시각 기본값은 `CURRENT_TIMESTAMP`. 사건 시각의 NULL과 기본값 없음은 유지한다. `PK1, PK2`는 복합 키 순서이며, 모든 FK의 삭제 동작을 명시한다. 원문에서 생략된 삭제 동작은 팀 결정에 따라 `RESTRICT`로 쓴다. 현재 시각 기본값은 INSERT에만 적용되고 `updated_at`의 후속 갱신은 애플리케이션이 수행한다.
 
@@ -1683,9 +1683,9 @@ COMMENT ON COLUMN notification_mute.created_at IS '생성 일자';
 ```
 
 
-## V1 이후 바뀐 것 (V2~V14, 나민서 개인 확장)
+## V1 이후 바뀐 것 (V2~V19, 나민서 개인 확장)
 
-2026-10-15 덧붙임. 위 본문(1~4절, ERD 변경 제안)은 V1 기준이며 고치지 않았다. 아래 내용은 모두 baselog 저장소 `backend/src/main/resources/db/migration` 의 `V2`~`V14` SQL과 그 주석에서 옮겼다. 날짜는 SQL 주석에 적힌 것만 썼고, 없으면 "—"로 두었다. 표기는 위 컬럼표와 같다(`timestamptz` → `DATETIME`, `GENERATED ALWAYS AS IDENTITY` → `AUTO_INCREMENT`).
+2026-10-15 덧붙임. 위 본문(1~4절, ERD 변경 제안)은 V1 기준이며 고치지 않았다. 아래 내용은 모두 baselog 저장소 `backend/src/main/resources/db/migration` 의 `V2`~`V19` SQL과 그 주석에서 옮겼다. 날짜는 SQL 주석에 적힌 것만 썼고, 없으면 "—"로 두었다. 표기는 위 컬럼표와 같다(`timestamptz` → `DATETIME`, `GENERATED ALWAYS AS IDENTITY` → `AUTO_INCREMENT`).
 
 ### 요약
 
@@ -1704,8 +1704,13 @@ COMMENT ON COLUMN notification_mute.created_at IS '생성 일자';
 | V12 | 2026-10-14 | `inquiry` 새 테이블, 알림 종류 CHECK에 INQUIRY_ANSWERED 추가 | 023 |
 | V13 | 2026-10-14 | `site_visit_daily` 새 테이블 | 024 |
 | V14 | 2026-10-15 | `image.purpose` CHECK에 BANNER 추가, `uq_image_banner_current` 부분 유일 인덱스 | 025 |
+| V15 | 2026-10-15 | `member.banner_color` 칸 추가(사진 없을 때 배너 색, 소문자 #rrggbb, null = 기본), `ck_member_banner_color` | 025 |
+| V16 | 2026-10-16 | 데이터만: 배경을 사계절 그림 넷으로 바꾸며 예전 배경 다섯 개 산 기록마다 환불 ADJUST | 021 |
+| V17 | 2026-10-16 | 데이터만: V16을 한 번 더(배포 전환 중 늦은 구매) | 021 |
+| V18 | 2026-10-16 | `nest.show_on_blog` 칸 추가(둥지 프로필에 내 새 보이기, 기본 false) | 021 |
+| V19 | 2026-10-16 | 데이터만: 밀짚모자 판매 중단, 산 기록마다 환불 ADJUST | 021 |
 
-V2~V14 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`, `post_attachment`, `attachment_trash`, `nest`, `nest_point`, `nest_item`, `inquiry`, `site_visit_daily`)를 더해 29개다. 새 FK는 `fk_category_member`, `fk_category_parent`, `fk_post_category`, `fk_post_attachment_post`, `fk_nest_member`, `fk_nest_point_member`, `fk_nest_item_member`, `fk_inquiry_member`, `fk_inquiry_image`, `fk_inquiry_answered_by` 10개다. 위 1절 mermaid 그림에는 넣지 않았다.
+V2~V19 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`, `post_attachment`, `attachment_trash`, `nest`, `nest_point`, `nest_item`, `inquiry`, `site_visit_daily`)를 더해 29개다. 새 FK는 `fk_category_member`, `fk_category_parent`, `fk_post_category`, `fk_post_attachment_post`, `fk_nest_member`, `fk_nest_point_member`, `fk_nest_item_member`, `fk_inquiry_member`, `fk_inquiry_image`, `fk_inquiry_answered_by` 10개다. 위 1절 mermaid 그림에는 넣지 않았다.
 
 ### 새 테이블
 
@@ -1840,7 +1845,11 @@ V2~V14 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`
 - **post.visibility / member.default_visibility** (V7, 004 US8): `ck_post_visibility`, `ck_member_default_visibility`를 ('PUBLIC', 'FRIENDS', 'PRIVATE')로 넓혔다. 기존 행은 바꾸지 않았다. 친구가 보는 블로그 목록용 부분 인덱스 `ix_post_blog_friends` ON post (author_id, published_at DESC, id DESC) WHERE status = 'PUBLISHED' AND visibility IN ('PUBLIC', 'FRIENDS') AND deleted_at IS NULL AND hidden_at IS NULL.
 - **comment.secret** (V8, 007): `BOOLEAN NOT NULL DEFAULT false` 컬럼 추가(컬럼 주석 '비밀 댓글 여부'). 기존 댓글은 모두 공개 댓글로 남는다.
 - **image.purpose** (V14, 025): `ck_image_purpose`를 ('POST', 'PROFILE', 'BANNER')로 다시 만들었다(NOT VALID 후 VALIDATE). member에 칸을 두지 않고 image 행의 용도와 연결 상태로 "지금 배너"를 정한다. 부분 유일 인덱스 `uq_image_banner_current` ON image (uploader_id) WHERE purpose = 'BANNER' AND status = 'ATTACHED' AND detached_at IS NULL — 회원당 지금 배너 최대 1장(조건은 `uq_image_profile_current`와 같음).
+- **member.banner_color** (V15, 025): `VARCHAR(7)` NULL 칸 추가. `ck_member_banner_color` CHECK (banner_color ~ '^#[0-9a-f]{6}$') NOT VALID — 새 칸이라 기존 행은 모두 null이고 새로 쓰는 값만 검사한다. null이면 기본 배경색.
+- **nest.show_on_blog** (V18, 021): `BOOLEAN NOT NULL DEFAULT false` 칸 추가. 내 둥지 프로필에 내 새를 보일지.
 - **nest_point 데이터** (V10·V11, 021, 데이터만):
   - V10: role = 'ADMIN'인 회원에게 ADJUST 2890점 한 줄(source_key 'admin-grant:2026-10-13'). 2890 = 그때 파는 물건 값의 합(배경 800 + 둥지 850 + 소품 500 + 새 장식 740).
   - V11: 판매에서 뺀 물건을 산 PURCHASE 기록(source_key 'BUY:<물건>', amount < 0)마다 반대 부호 ADJUST 한 줄(source_key 'REFUND:<물건>'). 지금 파는 14개 코드(bg-meadow, bg-sky, bg-sunset, bg-cherry, bg-night, nest-leaf, nest-flower, nest-snow, nest-ribbon, nest-star, acc-flower-crown, acc-ribbon, acc-crown, acc-flower-pin)는 제외. `nest_item` 행은 지우지 않는다.
-  - 둘 다 ON CONFLICT (member_id, source_key) DO NOTHING이라 다시 돌아도 두 번 들어가지 않는다.
+  - V16·V17: 예전 배경 다섯 개(bg-meadow, bg-sky, bg-sunset, bg-cherry, bg-night)를 산 기록마다 환불 ADJUST. V17은 배포 전환 중 옛 앱이 판 것까지 잡으려고 같은 SQL을 한 번 더 돈다. `nest_item`·`nest.background`는 그대로(앱이 모르는 코드는 기본 배경).
+  - V19: 밀짚모자(acc-straw-hat)를 산 기록마다 환불 ADJUST. `nest_item`·장착 목록은 그대로(앱이 모르는 코드는 보이지 않음).
+  - 모두 ON CONFLICT (member_id, source_key) DO NOTHING이라 다시 돌아도 두 번 들어가지 않는다.
