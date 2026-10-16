@@ -63,7 +63,7 @@
 2. **When** "🔒 N점으로 해금"을 누르면, **Then** 확인 창 없이 사고 바로 씌운다. 잔액이 줄고 기록에 "물건 사기 · 가을 −150". 같은 물건을 다시 사면 409 `NEST_ITEM_ALREADY_OWNED`. (2026-10-14 고침: 전에는 [사기] → 확인 창 → [장착])
 3. **When** 배경·둥지에서 [적용]을 누르면, **Then** 하나로 바뀐다. 둥지 단추는 "적용 중"(누를 수 없음), 배경 단추는 초록 [적용 해제]이고 누르면 기본 배경으로 돌아간다(2026-10-16). 이때 화면은 `PUT /api/me/nest/equipped`에 `background: "bg-basic"`을 보낸다. `bg-basic`은 값 0이라 누구나 가진 것으로 보므로 `NEST_ITEM_NOT_OWNED` 없이 받아 준다(`null`도 기본 배경). 새 장식에서 [착용]을 누르면 더해지고(같은 자리 새 장식은 화면이 바꿔 단다, 서버는 두 개 오면 400 `NEST_SLOT_TAKEN`) 단추는 초록 [착용 해제]가 된다. 사지 않은 물건은 400 `NEST_ITEM_NOT_OWNED`. (2026-10-14 고침: 전에는 [장착]·[내리기])
 4. **Given** 포인트 기록이 많으면, **Then** 처음 5개만 보이고 [더 보기]마다 10개씩 더 보인다. (2026-10-14)
-5. **Given** V16 전에 노을을 150점에 산 사람, **When** V16이 돌면, **Then** 기록에 ADJUST +150(source_key `REFUND:bg-sunset`) 한 줄이 생긴다. 돌려주는 값은 그 사람의 산 기록(`PURCHASE`, source_key `BUY:<코드>`)에 남은 금액 그대로이고, 다시 돌아도 한 번만 들어간다. (2026-10-16)
+5. **Given** V16 전에 뺀 배경 다섯(`bg-meadow`·`bg-sky`·`bg-sunset`·`bg-cherry`·`bg-night`) 중 하나를 산 사람(예: 노을 150점), **When** V16이 돌면, **Then** 기록에 ADJUST +150(source_key `REFUND:bg-sunset`) 한 줄이 생긴다. 돌려주는 값은 그 사람의 산 기록(`PURCHASE`, source_key `BUY:<코드>`)에 남은 금액 그대로이고, 다시 돌아도 한 번만 들어간다. (2026-10-16)
 
 ### User Story 3 - 둥지와 새 보여 주기 (P2)
 
