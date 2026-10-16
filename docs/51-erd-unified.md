@@ -1707,7 +1707,7 @@ COMMENT ON COLUMN notification_mute.created_at IS '생성 일자';
 | V15 | 2026-10-15 | `member.banner_color` 칸 추가(사진 없을 때 배너 색, 소문자 #rrggbb, null = 기본), `ck_member_banner_color` | 025 |
 | V16 | 2026-10-16 | 데이터만: 배경을 사계절 그림 넷으로 바꾸며 예전 배경 다섯 개 산 기록마다 환불 ADJUST | 021 |
 | V17 | 2026-10-16 | 데이터만: V16을 한 번 더(배포 전환 중 늦은 구매) | 021 |
-| V18 | 2026-10-16 | `nest.show_on_blog` 칸 추가(둥지 프로필에 내 새 보이기, 기본 false) | 021 |
+| V18 | 2026-10-16 | `nest.show_on_blog` 칸 추가(둥지 프로필에 내 새 보이기, 기본 false). PR #162 뒤로 앱은 이 칸을 읽지 않는다 | 021 |
 | V19 | 2026-10-16 | 데이터만: 밀짚모자 판매 중단, 산 기록마다 환불 ADJUST | 021 |
 
 V2~V19 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`, `post_attachment`, `attachment_trash`, `nest`, `nest_point`, `nest_item`, `inquiry`, `site_visit_daily`)를 더해 29개다. 새 FK는 `fk_category_member`, `fk_category_parent`, `fk_post_category`, `fk_post_attachment_post`, `fk_nest_member`, `fk_nest_point_member`, `fk_nest_item_member`, `fk_inquiry_member`, `fk_inquiry_image`, `fk_inquiry_answered_by` 10개다. 위 1절 mermaid 그림에는 넣지 않았다.
@@ -1846,7 +1846,7 @@ V2~V19 뒤 테이블은 V1의 20개에 새 테이블 9개(`shedlock`, `category`
 - **comment.secret** (V8, 007): `BOOLEAN NOT NULL DEFAULT false` 컬럼 추가(컬럼 주석 '비밀 댓글 여부'). 기존 댓글은 모두 공개 댓글로 남는다.
 - **image.purpose** (V14, 025): `ck_image_purpose`를 ('POST', 'PROFILE', 'BANNER')로 다시 만들었다(NOT VALID 후 VALIDATE). member에 칸을 두지 않고 image 행의 용도와 연결 상태로 "지금 배너"를 정한다. 부분 유일 인덱스 `uq_image_banner_current` ON image (uploader_id) WHERE purpose = 'BANNER' AND status = 'ATTACHED' AND detached_at IS NULL — 회원당 지금 배너 최대 1장(조건은 `uq_image_profile_current`와 같음).
 - **member.banner_color** (V15, 025): `VARCHAR(7)` NULL 칸 추가. `ck_member_banner_color` CHECK (banner_color ~ '^#[0-9a-f]{6}$') NOT VALID — 새 칸이라 기존 행은 모두 null이고 새로 쓰는 값만 검사한다. null이면 기본 배경색.
-- **nest.show_on_blog** (V18, 021): `BOOLEAN NOT NULL DEFAULT false` 칸 추가. 내 둥지 프로필에 내 새를 보일지.
+- **nest.show_on_blog** (V18, 021): `BOOLEAN NOT NULL DEFAULT false` 칸 추가. 내 둥지 프로필에 내 새를 보일지. 2026-10-16 PR #162에서 설정 스위치를 없애 지금은 누구 둥지든 사진을 누르면 새가 보이고, 이 칸은 남아 있지만 읽지 않는다.
 - **nest_point 데이터** (V10·V11, 021, 데이터만):
   - V10: role = 'ADMIN'인 회원에게 ADJUST 2890점 한 줄(source_key 'admin-grant:2026-10-13'). 2890 = 그때 파는 물건 값의 합(배경 800 + 둥지 850 + 소품 500 + 새 장식 740).
   - V11: 판매에서 뺀 물건을 산 PURCHASE 기록(source_key 'BUY:<물건>', amount < 0)마다 반대 부호 ADJUST 한 줄(source_key 'REFUND:<물건>'). 지금 파는 14개 코드(bg-meadow, bg-sky, bg-sunset, bg-cherry, bg-night, nest-leaf, nest-flower, nest-snow, nest-ribbon, nest-star, acc-flower-crown, acc-ribbon, acc-crown, acc-flower-pin)는 제외. `nest_item` 행은 지우지 않는다.
