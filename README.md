@@ -46,6 +46,7 @@
 | 028 | [nest-manage](specs/028-nest-manage/spec.md) 내 둥지 관리(글·카테고리·통계·휴지통 탭)·내 둥지 통계 (나민서 개인 확장, 006·017 화면 바뀜) | 민서 요청 2026-10-15 | 개인 확장 | 구현 ✓ |
 | 029 | [pinned-post](specs/029-pinned-post/spec.md) 고정 글(내 글을 둥지 맨 위에 최대 3개, `post.pinned_at` V21) (나민서 개인 확장, 005·006 화면 바뀜) | 민서 요청 2026-10-16 | 개인 확장 | 구현 ✓ |
 | 030 | [post-collaborator](specs/030-post-collaborator/spec.md) 공동 작업자(친구 최대 3명이 제목·본문만 고침, 함께 쓴 사람 표시, 나만 보기 불가, `post_collaborator` V22·V23) (나민서 개인 확장, 002·004·005·011 화면 바뀜) | 민서 요청 2026-10-16 | 개인 확장 | 구현 ✓ |
+| 031 | [nest-visitors](specs/031-nest-visitors/spec.md) 둥지별 방문자(내 둥지 관리 [통계]에 방문자 칸·그래프, `blog_visit_daily` V24) (나민서 개인 확장, 028 화면 바뀜) | 민서 요청 2026-10-19 | 개인 확장 | 구현 ✓ |
 
 ERD(03, 51)는 각 스펙의 Implementation Notes에서 참조하며, `/speckit-plan` 단계의 `data-model.md`로 옮겨 갑니다. 카테고리·주제 등은 공통이 아닌 개인 확장(01 §2-4)이라 공통 스펙에 없습니다.
 
