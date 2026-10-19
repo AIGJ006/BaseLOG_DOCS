@@ -272,6 +272,7 @@ components:
         commentCount: { type: integer, minimum: 0 }
         likeCount: { type: integer, minimum: 0 }
         author: { $ref: '#/components/schemas/AuthorSummary' }
+        collaborative: { type: boolean, description: '030 공동 작업 글인가. 화면은 썸네일에 "공동 작업" 표시' }
     PostCardPage:
       type: object
       required: [items, nextCursor]
