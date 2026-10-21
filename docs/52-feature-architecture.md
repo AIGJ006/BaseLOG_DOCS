@@ -52,7 +52,7 @@ flowchart TB
 | **tag** | 태그 정규화·글-태그, 태그 목록·인기 태그, AI 태그 추천 (008·013) | `tag` `post_tag` | `/api/tags`, `/api/tags/trending`, `/api/tags/suggest`, `/api/tags/{name}/posts`(+summary), `/api/members/{handle}/tags`, `/api/posts/{id}/tag-suggestions` | account, post, discovery |
 | **media** | 사진 올리기(presign → 직접 업로드 → complete), 글 사진·프로필·배너, 첨부파일, 저장 용량, 정리 작업 (003·018·025) | `image` `post_image` `post_attachment` `attachment_trash` | `/api/images/presign`, `/api/images/{id}/complete`, `/api/me/storage`, `/api/posts/{id}/attachments` (+download) | account, post |
 | **interaction** | 댓글·답글·비밀 댓글, 좋아요, 조회수(하루 한 번 세기) (007·009) | `comment` `post_like` `post_view_daily` | `/api/posts/{id}/comments`, `/api/comments/{id}`(+replies), `/api/posts/{id}/like`, `/api/posts/{id}/views` | account, media, post |
-| **discovery** | 홈 목록·둥지(블로그) 머리말·고정 글 목록·검색(글·사람)·친구 피드·인기 글·태그 글 목록·사이트맵 (005·010·012·020·025·029) | (없음 — 읽기 전용) | `/api/posts`, `/api/posts/trending`, `/api/feed`, `/api/search/posts`, `/api/search/people`, `/api/members/{handle}`, `/api/members/{handle}/posts`(+pinned), `/@{handle}`·`/tags`·`/sitemap.xml`(서버 렌더 메타) | account, post, tag, media, interaction, category |
+| **discovery** | 홈 목록·둥지(블로그) 머리말·고정 글 목록·검색(글·사람)·친구 피드·인기 글·태그 글 목록·사이트맵 (005·010·012·020·025·029) | (없음 — 읽기 전용) | `/api/posts`, `/api/posts/trending`, `/api/feed`, `/api/search/posts`, `/api/search/people`, `/api/members/{handle}`, `/api/members/{handle}/posts`(+pinned), `/`·`/@{handle}`·`/tags`·`/sitemap.xml`·`/robots.txt`(서버 렌더 메타) | account, post, tag, media, interaction, category |
 | **category** | 회원별 2단계 카테고리, 글의 카테고리, 둥지 카테고리 목록 (017) | `category` (+ `post.category_id`는 post가 씀) | `/api/me/categories`(+order), `/api/posts/{id}/category`, `/api/members/{handle}/categories` | account, post |
 | **moderation** | 신고 접수, 관리자 신고 처리·직접 숨김, 회원 정지·해제, 관리자 회원 목록·회원 화면 (014·026) | `report_case` `report` | `POST /api/reports`, `/api/admin/reports`(+resolution), `/api/admin/posts/{id}/hidden`, `/api/admin/comments/{id}/hidden`, `/api/admin/members`(+suspensions) | account(정지), post·interaction(숨김) |
 | **notification** | 🔔 인앱 알림: 댓글·답글·좋아요(묶음)·친구 요청/수락·친구 새 글·신고 결과·숨김·문의 답변·공동 작업자 추가, 끄기 설정 (011·030) | `notification` `notification_actor` `notification_mute` | `/api/notifications`(+unread-count, read, read-all, 하나 지우기), `/api/me/notification-settings` | 이벤트로 받음 + account·post·interaction 확인 |
@@ -151,7 +151,7 @@ flowchart TB
 
 ## 7. 전체 API 목록 (dev 4c1b3de 기준, 2026-10-19)
 
-컨트롤러의 `@*Mapping`을 그대로 모은 목록이다(로그인·로그아웃은 Spring Security 필터). 요청·응답 모양과 오류는 각 스펙의 `contracts/openapi.yaml`·spec.md API 표를 본다. 화면 주소(`/settings`, `/admin/**` 등)는 `SpaForwardingController`가 React로 넘기므로 여기 넣지 않는다. `/@{handle}`·`/tags`·`/tags/{name}`·`/search`·`/sitemap.xml`은 검색 엔진용 메타를 붙여 서버가 그린다(`/tags/{name}`은 2026-10-19부터 화면이 전체 태그 목록 아래에 그 태그 글을 펼친다).
+컨트롤러의 `@*Mapping`을 그대로 모은 목록이다(로그인·로그아웃은 Spring Security 필터). 요청·응답 모양과 오류는 각 스펙의 `contracts/openapi.yaml`·spec.md API 표를 본다. 화면 주소(`/settings`, `/admin/**` 등)는 `SpaForwardingController`가 React로 넘기므로 여기 넣지 않는다. `/`·`/@{handle}`·`/tags`·`/tags/{name}`·`/search`·`/sitemap.xml`·`/robots.txt`는 검색 엔진용 메타를 붙여 서버가 그린다(`/tags/{name}`은 2026-10-19부터 화면이 전체 태그 목록 아래에 그 태그 글을 펼친다).
 
 - `/api/me/nest/dev/*`는 `blog.nest.dev-tools=true`(로컬)일 때만 생긴다.
 - 원문 04·23과 003 스펙의 `PUT /api/images/{id}/content`(PROXY 모드)는 아직 만들지 않았다. 운영은 DIRECT(브라우저 → MinIO)만 쓴다.
@@ -272,6 +272,8 @@ flowchart TB
 | `GET` | `/api/posts/trending` | TrendingController |
 | `GET` | `/api/search/people` | SearchController |
 | `GET` | `/api/search/posts` | SearchController |
+| `GET` | `/` | PageShellController |
+| `GET` | `/robots.txt` | RobotsController |
 | `GET` | `/search` | PageShellController |
 | `GET` | `/sitemap.xml` | SitemapController |
 | `GET` | `/tags` | PageShellController |
